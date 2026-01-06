@@ -24,3 +24,22 @@ vlm_ocr_system_prompt = """
 
 def get_vlm_ocr_system_prompt() -> str:
     return vlm_ocr_system_prompt
+
+
+metadata_extraction_system_prompt = """
+    Extract bibliographic metadata from the OCR text.
+    Return ONLY valid JSON with keys: title, authors, journal, year, abstract.
+    Use empty string for missing text fields, empty array for authors, and null for year.
+"""
+
+
+def get_metadata_extraction_prompt(ocr_text: str, retry_focus: list[str] | None) -> str:
+    focus = ""
+    if retry_focus:
+        focus = f"Focus on missing fields: {', '.join(retry_focus)}.\n"
+    return (
+        f"{metadata_extraction_system_prompt}\n"
+        f"{focus}"
+        "OCR TEXT:\n"
+        f"{ocr_text}\n"
+    )
