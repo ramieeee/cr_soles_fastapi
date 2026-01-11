@@ -7,7 +7,7 @@ from app.langgraph.multimodal_extraction import get_document_graph
 
 router = APIRouter()
 
-router_prefix = "/document"
+router_prefix = "/multimodal_extraction"
 
 
 @router.post(f"{router_prefix}/process", tags=["document"])
