@@ -2,9 +2,13 @@ from functools import lru_cache
 
 from langgraph.graph import END, StateGraph
 
-from app.langgraph.nodes.metadata import extract_metadata, prepare_retry, should_retry
-from app.langgraph.nodes.ocr import run_ocr
-from app.langgraph.state import DocumentState
+from app.langgraph.multimodal_extraction.nodes.metadata import (
+    extract_metadata,
+    prepare_retry,
+    should_retry,
+)
+from app.langgraph.multimodal_extraction.nodes.ocr import run_ocr
+from app.langgraph.multimodal_extraction.state import DocumentState
 
 
 def build_document_graph():

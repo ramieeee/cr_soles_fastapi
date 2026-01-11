@@ -6,7 +6,7 @@ import httpx
 
 from app.core.config import settings
 from app.core.prompts import get_vlm_ocr_system_prompt
-from app.langgraph.state import DocumentState
+from app.langgraph.multimodal_extraction.state import DocumentState
 
 
 def _extract_ollama_text(payload: dict) -> str:

@@ -3,7 +3,7 @@ import base64
 import fitz  # PyMuPDF
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
-from app.langgraph import get_document_graph
+from app.langgraph.multimodal_extraction import get_document_graph
 
 router = APIRouter()
 

@@ -7,7 +7,7 @@ import httpx
 
 from app.core.config import settings
 from app.core.prompts import get_metadata_extraction_prompt
-from app.langgraph.state import DocumentState
+from app.langgraph.multimodal_extraction.state import DocumentState
 
 
 REQUIRED_FIELDS = ("title", "authors", "journal", "year", "abstract")
