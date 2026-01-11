@@ -5,7 +5,6 @@ vlm_ocr_system_prompt = """
     
     # Example output:
     {
-        "text": "Extracted text content here.",
         "tables": [
             {
                 "headers": ["Header1", "Header2"],

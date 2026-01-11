@@ -32,7 +32,7 @@ async def process_document(
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Invalid PDF: {exc}") from exc
 
-    page_images_b64: list[str] = []
+    page_images_b64: list[str] = []  # pages into base64 images
     try:
         for page in doc:
             pix = page.get_pixmap(matrix=fitz.Matrix(2, 2), alpha=False)

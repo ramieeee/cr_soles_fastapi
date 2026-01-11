@@ -74,6 +74,7 @@ async def extract_metadata(state: DocumentState) -> DocumentState:
     retry_focus = state.get("retry_focus") or []
     prompt = get_metadata_extraction_prompt(ocr_text, retry_focus)
 
+    # Call Ollama API to extract metadata
     async with httpx.AsyncClient(timeout=300.0, trust_env=False) as client:
         generate_url = f"{settings.ollama_base_url}/api/generate"
         payload = {

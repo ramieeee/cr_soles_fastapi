@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import httpx
 
 from app.core.config import settings
@@ -9,8 +11,22 @@ from app.langgraph.state import DocumentState
 
 def _extract_ollama_text(payload: dict) -> str:
     if "message" in payload and isinstance(payload["message"], dict):
-        return str(payload["message"].get("content", "")).strip()
-    return str(payload.get("response", "")).strip()
+        content = str(payload["message"].get("content", "")).strip()
+    else:
+        content = str(payload.get("response", "")).strip()
+
+    if not content:
+        return ""
+
+    # Some models wrap JSON in a string; prefer the inner "text" field if present.
+    try:
+        parsed = json.loads(content)
+        if isinstance(parsed, dict) and isinstance(parsed.get("text"), str):
+            return parsed["text"].strip()
+    except json.JSONDecodeError:
+        pass
+
+    return content
 
 
 async def run_ocr(state: DocumentState) -> DocumentState:
@@ -36,7 +52,7 @@ async def run_ocr(state: DocumentState) -> DocumentState:
                     {"role": "system", "content": system_prompt},
                     {
                         "role": "user",
-                        "content": f"/no_think Page {page_index}: {user_prompt}",
+                        "content": f"Page {page_index}: {user_prompt}",
                         "images": [image_b64],
                     },
                 ],

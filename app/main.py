@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.routers.document_process import router as document_router
+from app.routers.document_process_route import router as document_router
 
 app = FastAPI(title=settings.app_name)
 
