@@ -5,9 +5,9 @@ from typing import Any
 
 import httpx
 
-from app.core.config import settings
 from app.core.prompts import get_metadata_extraction_prompt
 from app.langgraph.multimodal_extraction.state import DocumentState
+from app.clients.ollama_client import OllamaClient
 
 
 REQUIRED_FIELDS = ("title", "authors", "journal", "year", "abstract")
@@ -74,17 +74,9 @@ async def extract_metadata(state: DocumentState) -> DocumentState:
     retry_focus = state.get("retry_focus") or []
     prompt = get_metadata_extraction_prompt(ocr_text, retry_focus)
 
-    # Call Ollama API to extract metadata
+    ollama_client = OllamaClient()
     async with httpx.AsyncClient(timeout=300.0, trust_env=False) as client:
-        generate_url = f"{settings.ollama_base_url}/api/generate"
-        payload = {
-            "model": settings.ollama_model,
-            "prompt": f"/no_think {prompt}",
-            "stream": False,
-        }
-        response = await client.post(generate_url, json=payload)
-        response.raise_for_status()
-        response_payload = response.json()
+        response_payload = await ollama_client.generate_text(client, f"/no_think {prompt}")
 
     raw_text = str(response_payload.get("response", "")).strip()
     metadata_json = _extract_json(raw_text) or {}
