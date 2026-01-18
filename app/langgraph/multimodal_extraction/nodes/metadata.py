@@ -76,7 +76,7 @@ async def extract_metadata(state: DocumentState) -> DocumentState:
 
     ollama_client = OllamaClient()
     async with httpx.AsyncClient(timeout=300.0, trust_env=False) as client:
-        response_payload = await ollama_client.generate_text(client, f"/no_think {prompt}")
+        response_payload = await ollama_client.generate_text(client, f"{prompt}")
 
     raw_text = str(response_payload.get("response", "")).strip()
     metadata_json = _extract_json(raw_text) or {}

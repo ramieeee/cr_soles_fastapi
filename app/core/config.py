@@ -18,7 +18,12 @@ class Settings(BaseSettings):
     db_name: str
 
     ollama_base_url: str
+    ollama_port: int
     ollama_model: str
+
+    vllm_base_url: str
+    vllm_port: int
+    vllm_model: str
 
     @property
     def database_url(self) -> str:

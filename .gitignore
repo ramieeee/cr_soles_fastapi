@@ -12,3 +12,6 @@ wheels/
 # env
 .env
 .env.*
+
+# other
+cloud_model_script.md
