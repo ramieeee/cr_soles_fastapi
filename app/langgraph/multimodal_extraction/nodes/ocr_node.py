@@ -19,7 +19,7 @@ async def run_ocr(state: DocumentState) -> DocumentState:
     system_prompt = get_vlm_ocr_system_prompt()
     user_prompt = state.get("prompt") or "Extract the content of this page."
 
-    page_images_b64 = page_images_b64[:3]
+    # page_images_b64 = page_images_b64[:3]
     page_results: list[dict] = []
 
     vllm_client = VllmClient(port="")  # port is empty when run on runpod
