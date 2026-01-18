@@ -118,7 +118,8 @@ async def extract_metadata(state: DocumentState) -> DocumentState:
     ocr_pages = state.get("ocr_pages") or []
     retry_focus = state.get("retry_focus") or []
 
-    vllm_client = VllmClient(port="")
+    # Same rationale as OCR node: VllmClient.chat() uses its own timeout.
+    vllm_client = VllmClient(port="", timeout_s=300.0)
     metadata: dict[str, Any] = _normalize_metadata(state.get("metadata") or {})
     raw_text = ""
     metadata_complete = False

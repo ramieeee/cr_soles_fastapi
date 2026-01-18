@@ -5,6 +5,7 @@ import base64
 import fitz  # PyMuPDF
 
 from app.langgraph.multimodal_extraction import get_document_graph
+from app.core.logger import set_log
 
 
 SUPPORTED_PDF_TYPES = {
@@ -22,12 +23,14 @@ def _ensure_supported_pdf(content_type: str | None) -> None:
         raise ValueError("Only PDF files are supported.")
 
 
-async def process_document_bytes(
+async def run_service(
     pdf_bytes: bytes,
     content_type: str | None,
     prompt: str,
 ) -> dict:
     _ensure_supported_pdf(content_type)
+
+    set_log("Processing document bytes")
 
     try:
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -47,6 +50,7 @@ async def process_document_bytes(
         raise ValueError("PDF has no pages.")
 
     graph = get_document_graph()
+
     state = {
         "page_images_b64": page_images_b64,
         "prompt": prompt,
@@ -54,6 +58,7 @@ async def process_document_bytes(
         "max_attempts": 1,
     }
 
+    set_log("Invoking document graph")
     result = await graph.ainvoke(state)
     pages = result.get("ocr_pages", [])
     return {

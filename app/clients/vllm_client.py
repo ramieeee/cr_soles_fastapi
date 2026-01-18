@@ -12,7 +12,7 @@ class VllmClient:
         port: int | None = None,
         model_name: str | None = None,
         api_key: str | None = None,
-        timeout_s: float = 120.0,
+        timeout_s: float = 300.0,
     ):
         self.base_url = (base_url or settings.vllm_base_url).rstrip("/")
         self.port = port
