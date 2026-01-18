@@ -64,3 +64,26 @@ def get_metadata_extraction_prompt(ocr_text: str, retry_focus: list[str] | None)
         "OCR TEXT:\n"
         f"{ocr_text}\n"
     )
+
+
+metadata_determine_completion_prompt = """
+    # Task:
+    Determine if the extracted bibliographic metadata is complete.
+    
+    # Focus:
+    Pay special attention to commonly missed or incomplete fields.
+    
+    # Criteria for Completeness:
+    - "title" is non-empty.
+    - "authors" has at least one author.
+    - "journal" is non-empty.
+    - "year" is correct according to the document.
+    - "abstract" is not cut or incomplete.
+    
+    # Output:
+    Return ONLY "complete" or "incomplete".
+"""
+
+
+def get_metadata_determine_completion_prompt() -> str:
+    return metadata_determine_completion_prompt

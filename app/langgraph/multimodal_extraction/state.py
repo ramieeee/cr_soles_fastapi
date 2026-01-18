@@ -11,3 +11,4 @@ class DocumentState(TypedDict, total=False):
     retry_focus: list[str]
     attempts: int
     max_attempts: int
+    metadata_complete: bool
