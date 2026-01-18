@@ -7,7 +7,7 @@ import httpx
 from app.core.config import settings
 
 
-class VllmChatClient:
+class VllmClient:
     def __init__(
         self,
         base_url: str | None = None,
