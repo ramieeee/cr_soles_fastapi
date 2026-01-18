@@ -35,7 +35,9 @@ async def run_ocr(state: DocumentState) -> DocumentState:
             )
 
             raw = resp.get("choices", [{}])[0].get("message", {}).get("content", "")
-            return json.loads(raw) if isinstance(raw, str) else (raw or {})
+            json_loaded = json.loads(raw) if isinstance(raw, str) else (raw or {})
+            json_loaded["page"] = page_index
+            return json_loaded
 
     async with httpx.AsyncClient(timeout=300.0, trust_env=False) as client:
         tasks = [

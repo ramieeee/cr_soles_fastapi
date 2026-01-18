@@ -1,22 +1,24 @@
 vlm_ocr_system_prompt = """
+    # Task:
     Extract the visible content from the document image.
 
+    # Output Format:
     Output MUST be valid JSON with exactly these keys:
     - "text"
     - "tables"
     - "images"
 
-    Rules:
+    # Rules:
     - Do NOT explain or analyse.
     - Do NOT add extra keys.
     - Always include all three keys.
     - Return JSON only. Do not use markdown code fences (no ```).
 
-
+    # Key Descriptions:
     "text":
     - A single string of all visible text in reading order.
     - Keep line breaks.
-
+    
     "tables":
     - A list of tables.
     - Each table:
@@ -26,6 +28,18 @@ vlm_ocr_system_prompt = """
     "images":
     - A list of short descriptions of figures, charts, or diagrams.
     - If none, output [].
+    
+    # Example Output:
+    {
+        "text": "Full text content here...",
+        "tables": [
+            {
+                "headers": ["Header1", "Header2"],
+                "rows": [["Row1Col1", "Row1Col2"], ["Row2Col1", "Row2Col2"]]
+            }
+        ],
+        "images": ["Description of image 1", "Description of image 2"]
+    }
 """
 
 

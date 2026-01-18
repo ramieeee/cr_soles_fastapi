@@ -2,12 +2,12 @@ from functools import lru_cache
 
 from langgraph.graph import END, StateGraph
 
-from app.langgraph.multimodal_extraction.nodes.metadata import (
+from app.langgraph.multimodal_extraction.nodes.metadata_node import (
     extract_metadata,
     prepare_retry,
     should_retry,
 )
-from app.langgraph.multimodal_extraction.nodes.ocr import run_ocr
+from app.langgraph.multimodal_extraction.nodes.ocr_node import run_ocr
 from app.langgraph.multimodal_extraction.state import DocumentState
 
 
