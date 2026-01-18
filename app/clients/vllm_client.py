@@ -17,12 +17,19 @@ class VllmClient:
         timeout_s: float = 120.0,
     ):
         self.base_url = (base_url or settings.vllm_base_url).rstrip("/")
-        self.port = port or settings.vllm_port
+        self.port = port
         self.model = model_name or settings.vllm_model
         self.api_key = api_key or getattr(settings, "vllm_api_key", "EMPTY")
 
-        self.chat_url = f"{self.base_url}:{self.port}/v1/chat/completions"
+        print(self.port)
+        self.chat_url = (
+            f"{self.base_url}:{self.port}/v1/chat/completions"
+            if self.port != ""
+            else f"{self.base_url}/v1/chat/completions"
+        )
         self.timeout = httpx.Timeout(timeout_s)
+
+        print(f"urls: {self.chat_url}")
 
     def _headers(self) -> dict[str, str]:
         return {

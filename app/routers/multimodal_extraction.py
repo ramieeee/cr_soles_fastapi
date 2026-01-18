@@ -12,6 +12,7 @@ async def process_document(
     pdf: UploadFile = File(...),
     prompt: str = Form("Describe the document"),
 ):
+    print("Received document for processing")
     pdf_bytes = await pdf.read()
 
     try:
@@ -19,4 +20,6 @@ async def process_document(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Ollama request failed: {exc}") from exc
+        raise HTTPException(
+            status_code=502, detail=f"VLLM request failed: {exc}"
+        ) from exc

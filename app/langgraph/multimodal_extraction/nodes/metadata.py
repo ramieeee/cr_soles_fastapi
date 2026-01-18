@@ -7,7 +7,7 @@ import httpx
 
 from app.core.prompts import get_metadata_extraction_prompt
 from app.langgraph.multimodal_extraction.state import DocumentState
-from app.clients.ollama_client import OllamaClient
+from app.clients.vllm_client import VllmClient
 
 
 REQUIRED_FIELDS = ("title", "authors", "journal", "year", "abstract")
@@ -70,13 +70,14 @@ def _find_missing_fields(metadata: dict[str, Any]) -> list[str]:
 
 
 async def extract_metadata(state: DocumentState) -> DocumentState:
+    print("Starting metadata extraction from OCR text...")
     ocr_text = state.get("ocr_text") or ""
     retry_focus = state.get("retry_focus") or []
     prompt = get_metadata_extraction_prompt(ocr_text, retry_focus)
 
-    ollama_client = OllamaClient()
+    vllm_client = VllmClient(port="")
     async with httpx.AsyncClient(timeout=300.0, trust_env=False) as client:
-        response_payload = await ollama_client.generate_text(client, f"{prompt}")
+        response_payload = await vllm_client.chat(client=client, prompt=f"{prompt}")
 
     raw_text = str(response_payload.get("response", "")).strip()
     metadata_json = _extract_json(raw_text) or {}

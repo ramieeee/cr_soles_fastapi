@@ -11,6 +11,7 @@ from app.clients.vllm_client import VllmClient
 
 
 async def run_ocr(state: DocumentState) -> DocumentState:
+    print("Starting OCR for document pages...")
     page_images_b64 = state.get("page_images_b64", [])
     if not page_images_b64:
         return {"ocr_pages": [], "ocr_text": ""}
@@ -21,7 +22,7 @@ async def run_ocr(state: DocumentState) -> DocumentState:
     page_images_b64 = page_images_b64[:3]
     page_results: list[dict] = []
 
-    vllm_client = VllmClient()
+    vllm_client = VllmClient(port="")  # port is empty when run on runpod
     async with httpx.AsyncClient(timeout=300.0, trust_env=False) as client:
         for page_index, image_b64 in enumerate(page_images_b64, start=1):
             response = await vllm_client.chat(
