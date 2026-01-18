@@ -1,10 +1,8 @@
 from __future__ import annotations
-
 from typing import Any, Optional
-
 import httpx
-
 from app.core.config import settings
+from app.core.logger import set_log
 
 
 class VllmClient:
@@ -21,7 +19,6 @@ class VllmClient:
         self.model = model_name or settings.vllm_model
         self.api_key = api_key or getattr(settings, "vllm_api_key", "EMPTY")
 
-        print(self.port)
         self.chat_url = (
             f"{self.base_url}:{self.port}/v1/chat/completions"
             if self.port != ""
@@ -29,7 +26,9 @@ class VllmClient:
         )
         self.timeout = httpx.Timeout(timeout_s)
 
-        print(f"urls: {self.chat_url}")
+        set_log(
+            f"VllmClient initialized with base_url={self.base_url}, port={self.port}, model={self.model}"
+        )
 
     def _headers(self) -> dict[str, str]:
         return {
@@ -83,6 +82,7 @@ class VllmClient:
         - system_prompt content
         - whether image_b64 is passed
         """
+        set_log("VllmClient.chat called")
         messages = [
             {"role": "system", "content": system_prompt},
             self._build_user_message(
@@ -91,6 +91,10 @@ class VllmClient:
                 image_mime=image_mime,
             ),
         ]
+
+        set_log(
+            f"system_prompt: {system_prompt}, user_prompt: {user_prompt}, temperature: {temperature}, max_tokens: {max_tokens}, extra: {extra}"
+        )
 
         payload: dict[str, Any] = {
             "model": self.model,
@@ -110,5 +114,6 @@ class VllmClient:
             headers=self._headers(),
             timeout=self.timeout,
         )
+        set_log(f"Response from VllmClient.chat: {response.text}")
         response.raise_for_status()
         return response.json()

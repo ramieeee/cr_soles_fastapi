@@ -9,6 +9,8 @@ from app.core.prompts import get_metadata_extraction_prompt
 from app.langgraph.multimodal_extraction.state import DocumentState
 from app.clients.vllm_client import VllmClient
 
+from app.core.logger import set_log
+
 
 REQUIRED_FIELDS = ("title", "authors", "journal", "year", "abstract")
 
@@ -20,6 +22,7 @@ def _extract_json(text: str) -> dict[str, Any] | None:
         return None
     snippet = text[start : end + 1]
     try:
+        set_log(f"Extracting JSON snippet: {snippet}")
         return json.loads(snippet)
     except json.JSONDecodeError:
         return None
@@ -70,16 +73,23 @@ def _find_missing_fields(metadata: dict[str, Any]) -> list[str]:
 
 
 async def extract_metadata(state: DocumentState) -> DocumentState:
-    print("Starting metadata extraction from OCR text...")
+    set_log("extract_metadata node")
     ocr_text = state.get("ocr_text") or ""
     retry_focus = state.get("retry_focus") or []
     prompt = get_metadata_extraction_prompt(ocr_text, retry_focus)
 
     vllm_client = VllmClient(port="")
     async with httpx.AsyncClient(timeout=300.0, trust_env=False) as client:
-        response_payload = await vllm_client.chat(client=client, prompt=f"{prompt}")
+        response_payload = await vllm_client.chat(
+            client=client,
+            system_prompt="",
+            user_prompt=str(prompt),
+        )
 
-    raw_text = str(response_payload.get("response", "")).strip()
+    raw_text = (
+        response_payload.get("choices", [{}])[0].get("message", {}).get("content", "")
+    )
+    raw_text = str(raw_text).strip()
     metadata_json = _extract_json(raw_text) or {}
     metadata = _normalize_metadata(metadata_json)
     missing_fields = _find_missing_fields(metadata)
