@@ -5,7 +5,6 @@ class DocumentState(TypedDict, total=False):
     page_images_b64: list[str]
     prompt: str
     ocr_pages: list[dict]
-    ocr_text: str
     metadata: dict
     metadata_raw: str
     missing_fields: list[str]

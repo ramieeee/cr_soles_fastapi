@@ -11,7 +11,7 @@ from app.core.logger import set_log
 
 
 async def run_ocr(state: DocumentState) -> DocumentState:
-    set_log("run_ocr node")
+    set_log("Run_ocr node")
     page_images_b64 = state.get("page_images_b64", [])
     if not page_images_b64:
         return {"ocr_pages": [], "ocr_text": ""}
@@ -55,6 +55,6 @@ async def run_ocr(state: DocumentState) -> DocumentState:
         else:
             page_results.append(r)
 
-    print(f"Completed OCR for page document ({len(page_images_b64)} pages)")
+    set_log(f"Completed OCR for page document ({len(page_images_b64)} pages)")
 
     return {"ocr_pages": page_results}

@@ -73,7 +73,7 @@ def _find_missing_fields(metadata: dict[str, Any]) -> list[str]:
 
 
 async def extract_metadata(state: DocumentState) -> DocumentState:
-    set_log("extract_metadata node")
+    set_log("Extract_metadata node")
     ocr_text = state.get("ocr_text") or ""
     retry_focus = state.get("retry_focus") or []
     prompt = get_metadata_extraction_prompt(ocr_text, retry_focus)
