@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     vllm_port: int
     vllm_model: str
 
+    embedding_base_url: str
+    embedding_port: int
+    embedding_model: str
+    embedding_dimension: int
+
     @property
     def database_url(self) -> str:
         return (

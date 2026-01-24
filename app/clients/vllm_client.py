@@ -115,5 +115,10 @@ class VllmClient:
             timeout=self.timeout,
         )
         set_log(f"Response from VllmClient.chat: {response.text[:100]}")
+        if response.status_code != 200:
+            set_log(
+                f"VllmClient.chat error response: {response.status_code} - {response.text}",
+                level="error",
+            )
         response.raise_for_status()
         return response.json()

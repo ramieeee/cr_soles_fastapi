@@ -18,6 +18,9 @@
       "cwd": "${workspaceFolder}",
       "envFile": "${workspaceFolder}/.env",
       "console": "integratedTerminal",
+      "autoReload": {
+        "enable": true
+      },
       "justMyCode": true
     },
     {

@@ -8,6 +8,7 @@ from app.langgraph.multimodal_extraction.nodes.metadata_node import (
     should_retry,
 )
 from app.langgraph.multimodal_extraction.nodes.ocr_node import run_ocr
+from app.langgraph.multimodal_extraction.nodes.embedding_node import embed_data
 from app.langgraph.multimodal_extraction.state import DocumentState
 
 
@@ -16,6 +17,7 @@ def build_document_graph():
     graph.add_node("ocr", run_ocr)
     graph.add_node("extract_metadata", extract_metadata)
     graph.add_node("prepare_retry", prepare_retry)
+    graph.add_node("embed", embed_data)
 
     graph.set_entry_point("ocr")
     graph.add_edge("ocr", "extract_metadata")
@@ -25,6 +27,7 @@ def build_document_graph():
         {"retry": "prepare_retry", "end": END},
     )
     graph.add_edge("prepare_retry", "extract_metadata")
+    graph.add_edge("extract_metadata", "embed")
     return graph.compile()
 
 

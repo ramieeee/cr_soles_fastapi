@@ -18,13 +18,14 @@ async def process_document(
 
     try:
         result = await run_service(pdf_bytes, pdf.content_type, prompt)
-        set_log("Multimodal_extraction done")
+
+        set_log("Multimodal_extraction done", level="info")
         return result
     except ValueError as exc:
-        set_log(f"ValueError in process_document: {exc}")
+        set_log(f"ValueError in process_document: {exc}", level="error")
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
-        set_log(f"Exception in process_document: {exc}")
+        set_log(f"Exception in process_document: {exc}", level="error")
         raise HTTPException(
             status_code=502, detail=f"VLLM request failed: {exc}"
         ) from exc

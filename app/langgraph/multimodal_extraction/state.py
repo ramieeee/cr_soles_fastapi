@@ -12,3 +12,4 @@ class DocumentState(TypedDict, total=False):
     attempts: int
     max_attempts: int
     metadata_complete: bool
+    embeddings: list[float]

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.routers.multimodal_extraction import router as document_router
+from app.routers.multimodal_extraction_route import router as document_router
 from app.core.logger import set_log
 
 app = FastAPI(title=settings.app_name)
