@@ -66,4 +66,5 @@ async def run_service(
         "metadata": result.get("metadata", {}),
         "missing_fields": result.get("missing_fields", []),
         "page_count": len(pages),
+        "embeddings": result.get("embeddings", []),
     }

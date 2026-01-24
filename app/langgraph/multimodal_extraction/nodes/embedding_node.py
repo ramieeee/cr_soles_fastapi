@@ -29,10 +29,8 @@ async def embed_data(state: DocumentState) -> DocumentState:
     if not text_to_embed:
         raise ValueError("No text available for embedding.")
 
-    port = settings.embedding_port if hasattr(settings, "embedding_port") else 8008
-
     # Same rationale as OCR node: EmbeddingClient.embed() uses its own timeout.
-    embedding_client = EmbeddingClient(port=port)
+    embedding_client = EmbeddingClient(port="")
 
     async with httpx.AsyncClient(timeout=300.0, trust_env=False) as client:
         resp = await embedding_client.embed(
