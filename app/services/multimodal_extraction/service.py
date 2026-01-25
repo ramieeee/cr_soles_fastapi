@@ -6,6 +6,8 @@ import fitz  # PyMuPDF
 
 from app.langgraph.multimodal_extraction import get_document_graph
 from app.core.logger import set_log
+from app.repositories.papers_repository import find_similar_papers
+from sqlalchemy.orm import Session
 
 
 SUPPORTED_PDF_TYPES = {
@@ -24,9 +26,7 @@ def _ensure_supported_pdf(content_type: str | None) -> None:
 
 
 async def run_service(
-    pdf_bytes: bytes,
-    content_type: str | None,
-    prompt: str,
+    pdf_bytes: bytes, content_type: str | None, prompt: str, db: Session
 ) -> dict:
     _ensure_supported_pdf(content_type)
 
@@ -61,10 +61,34 @@ async def run_service(
     set_log("Invoking document graph")
     result = await graph.ainvoke(state)
     pages = result.get("ocr_pages", [])
+    embedding = result.get("document_embedding")
+    similar_doc = []
+    if embedding:
+        similar_doc = find_similar_papers(
+            db,
+            embedding=embedding,
+            limit=1,
+            min_similarity=0.90,
+        )
+
+    # Similar to DB session management in routers
+    if similar_doc:
+        set_log(f"Found {len(similar_doc)} similar documents in the database.")
+        result["similar_documents"] = [
+            {
+                "id": doc.id,
+                "title": doc.title,
+                "similarity": doc.similarity,
+            }
+            for doc in similar_doc
+        ]
+    else:
+        set_log("No similar documents found in the database.")
+        result["similar_documents"] = []
+
     return {
         "pages": pages,
         "metadata": result.get("metadata", {}),
         "missing_fields": result.get("missing_fields", []),
         "page_count": len(pages),
-        "embeddings": result.get("embeddings", []),
     }

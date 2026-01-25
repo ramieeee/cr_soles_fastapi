@@ -49,7 +49,7 @@ class EmbeddingClient:
         """
         set_log("EmbeddingClient.embed called")
 
-        set_log(f"Input text for embedding: {input[:100]}")
+        set_log(f"Input text for embedding: {input[:30]}")
 
         payload: dict[str, Any] = {
             "model": self.model,
@@ -62,6 +62,6 @@ class EmbeddingClient:
             headers=self._headers(),
             timeout=self.timeout,
         )
-        set_log(f"Response from EmbeddingClient.embed: {response.text[:100]}")
+        set_log(f"Response from EmbeddingClient.embed: {response.text[:30]}")
         response.raise_for_status()
         return response.json()

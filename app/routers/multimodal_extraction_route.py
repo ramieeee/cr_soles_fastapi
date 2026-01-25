@@ -1,7 +1,10 @@
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, Depends
 
 from app.services.multimodal_extraction.service import run_service
 from app.core.logger import set_log
+from app.core.db import get_db
+from sqlalchemy.orm import Session
+
 
 router = APIRouter()
 
@@ -12,13 +15,13 @@ router_prefix = "/multimodal_extraction"
 async def process_document(
     pdf: UploadFile = File(...),
     prompt: str = Form("Describe the document"),
+    db: Session = Depends(get_db),
 ):
     set_log("multimodal_extraction")
     pdf_bytes = await pdf.read()
 
     try:
-        result = await run_service(pdf_bytes, pdf.content_type, prompt)
-
+        result = await run_service(pdf_bytes, pdf.content_type, prompt, db)
         set_log("Multimodal_extraction done", level="info")
         return result
     except ValueError as exc:

@@ -93,7 +93,7 @@ class VllmClient:
         ]
 
         set_log(
-            f"system_prompt: {system_prompt[:100]}, user_prompt: {user_prompt[:100]}, temperature: {temperature}, max_tokens: {max_tokens}, extra: {extra}"
+            f"system_prompt: {system_prompt[:20]}, user_prompt: {user_prompt[:20]}, temperature: {temperature}, max_tokens: {max_tokens}, extra: {extra}"
         )
 
         payload: dict[str, Any] = {
@@ -114,7 +114,7 @@ class VllmClient:
             headers=self._headers(),
             timeout=self.timeout,
         )
-        set_log(f"Response from VllmClient.chat: {response.text[:100]}")
+        set_log(f"Response from VllmClient.chat: {response.text[:30]}")
         if response.status_code != 200:
             set_log(
                 f"VllmClient.chat error response: {response.status_code} - {response.text}",
