@@ -6,7 +6,11 @@ import fitz  # PyMuPDF
 
 from app.langgraph.multimodal_extraction import get_document_graph
 from app.core.logger import set_log
-from app.repositories.papers_repository import find_similar_papers
+from app.repositories.papers_repository import (
+    find_similar_papers,
+    create_paper,
+    create_extraction,
+)
 from sqlalchemy.orm import Session
 
 
@@ -61,7 +65,7 @@ async def run_service(
     set_log("Invoking document graph")
     result = await graph.ainvoke(state)
     pages = result.get("ocr_pages", [])
-    embedding = result.get("document_embedding")
+    embedding = result.get("embeddings")
     similar_doc = []
     if embedding:
         similar_doc = find_similar_papers(
@@ -86,9 +90,37 @@ async def run_service(
         set_log("No similar documents found in the database.")
         result["similar_documents"] = []
 
+    metadata = result.get("metadata") or {}
+    missing_fields = result.get("missing_fields", [])
+
+    title = metadata.get("title") or "Unknown title"
+    authors = metadata.get("authors") or []
+    journal = metadata.get("journal") or None
+    year = metadata.get("year")
+    abstract = metadata.get("abstract") or None
+
+    paper = create_paper(
+        db,
+        title=title,
+        authors=authors,
+        journal=journal,
+        year=year,
+        abstract=abstract,
+        pdf_url=None,
+        ingestion_source="multimodal_extraction",
+        embedding=embedding if embedding else None,
+    )
+    create_extraction(
+        db,
+        paper_id=paper.id,
+        extraction_version="v1",
+        metadata_jsonb=metadata or None,
+        status="success" if not missing_fields else "partial",
+    )
+
     return {
         "pages": pages,
-        "metadata": result.get("metadata", {}),
-        "missing_fields": result.get("missing_fields", []),
+        "metadata": metadata,
+        "missing_fields": missing_fields,
         "page_count": len(pages),
     }

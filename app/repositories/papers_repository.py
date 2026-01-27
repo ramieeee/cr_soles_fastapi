@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from typing import Any, Sequence
 
-from pgvector.sqlalchemy import Vector  # 타입/바인딩 보조
-from pgvector.psycopg import register_vector
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+
+from app.models.paper import Paper
+from app.models.extraction import Extraction
+from app.models.evaluation import Evaluation
+from app.models.agents_log import AgentLog
 
 
 def find_similar_papers(
@@ -38,3 +41,105 @@ def find_similar_papers(
 
     result = db.execute(text(sql), params)
     return [dict(row) for row in result.mappings().all()]
+
+
+def create_paper(
+    db: Session,
+    *,
+    title: str,
+    authors: list[str] | None = None,
+    journal: str | None = None,
+    year: int | None = None,
+    abstract: str | None = None,
+    pdf_url: str | None = None,
+    ingestion_source: str | None = None,
+    embedding: list[float] | None = None,
+) -> Paper:
+    paper = Paper(
+        title=title,
+        authors=authors or [],
+        journal=journal,
+        year=year,
+        abstract=abstract,
+        pdf_url=pdf_url,
+        ingestion_source=ingestion_source,
+        embedding=embedding,
+    )
+    db.add(paper)
+    db.flush()
+    return paper
+
+
+def create_extraction(
+    db: Session,
+    *,
+    paper_id,
+    extraction_version: str,
+    metadata_jsonb: dict | None = None,
+    study_design_jsonb: dict | None = None,
+    sample_jsonb: dict | None = None,
+    outcomes_jsonb: dict | None = None,
+    risk_of_bias_jsonb: dict | None = None,
+    status: str = "success",
+) -> Extraction:
+    extraction = Extraction(
+        paper_id=paper_id,
+        extraction_version=extraction_version,
+        metadata_jsonb=metadata_jsonb,
+        study_design_jsonb=study_design_jsonb,
+        sample_jsonb=sample_jsonb,
+        outcomes_jsonb=outcomes_jsonb,
+        risk_of_bias_jsonb=risk_of_bias_jsonb,
+        status=status,
+    )
+    db.add(extraction)
+    db.flush()
+    return extraction
+
+
+def create_evaluation(
+    db: Session,
+    *,
+    extraction_id,
+    evaluator_id: str,
+    agreement_scores: dict | None = None,
+    notes: str | None = None,
+) -> Evaluation:
+    evaluation = Evaluation(
+        extraction_id=extraction_id,
+        evaluator_id=evaluator_id,
+        agreement_scores=agreement_scores,
+        notes=notes,
+    )
+    db.add(evaluation)
+    db.flush()
+    return evaluation
+
+
+def create_agent_log(
+    db: Session,
+    *,
+    agent_name: str,
+    paper_id=None,
+    extraction_id=None,
+    raw_output: str | None = None,
+    cleaned_output: dict | None = None,
+    input_text: str | None = None,
+    node_name: str | None = None,
+    prompt_hash: str | None = None,
+    model_name: str | None = None,
+) -> AgentLog:
+    log = AgentLog(
+        paper_id=paper_id,
+        extraction_id=extraction_id,
+        agent_name=agent_name,
+        raw_output=raw_output,
+        cleaned_output=cleaned_output,
+        input=input_text,
+        node_name=node_name,
+        prompt_hash=prompt_hash,
+        model_name=model_name,
+    )
+    db.add(log)
+    db.flush()
+    return log

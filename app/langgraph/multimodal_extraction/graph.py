@@ -24,10 +24,10 @@ def build_document_graph():
     graph.add_conditional_edges(
         "extract_metadata",
         should_retry,
-        {"retry": "prepare_retry", "end": END},
+        {"retry": "prepare_retry", "end": "embed"},
     )
     graph.add_edge("prepare_retry", "extract_metadata")
-    graph.add_edge("extract_metadata", "embed")
+    graph.add_edge("embed", END)
     return graph.compile()
 
 

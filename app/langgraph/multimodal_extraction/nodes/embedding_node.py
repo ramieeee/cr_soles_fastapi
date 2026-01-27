@@ -40,5 +40,5 @@ async def embed_data(state: DocumentState) -> DocumentState:
         set_log("EmbeddingClient.embed called")
 
     return {
-        "embeddings": resp.get("data", [{}])[0].get("embedding", []),
+        "embedding": resp.get("data", [{}])[0].get("embedding", []),
     }
