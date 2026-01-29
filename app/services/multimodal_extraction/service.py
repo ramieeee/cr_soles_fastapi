@@ -65,7 +65,7 @@ async def run_service(
     set_log("Invoking document graph")
     result = await graph.ainvoke(state)
     pages = result.get("ocr_pages", [])
-    embedding = result.get("embeddings")
+    embedding = result.get("embedding")
     similar_doc = []
     if embedding:
         similar_doc = find_similar_papers(
@@ -77,27 +77,30 @@ async def run_service(
 
     # Similar to DB session management in routers
     if similar_doc:
-        set_log(f"Found {len(similar_doc)} similar documents in the database.")
+
         result["similar_documents"] = [
             {
-                "id": doc.id,
-                "title": doc.title,
-                "similarity": doc.similarity,
+                "id": doc.get("id"),
+                "title": doc.get("title"),
+                "similarity": doc.get("similarity"),
             }
             for doc in similar_doc
         ]
+        set_log(
+            f"Similar documents found: {similar_doc} with similarity {similar_doc[0]['similarity'] if similar_doc else 'N/A'}"
+        )
     else:
         set_log("No similar documents found in the database.")
         result["similar_documents"] = []
 
-    metadata = result.get("metadata") or {}
+    bibliographic_information = result.get("bibliographic_information") or {}
     missing_fields = result.get("missing_fields", [])
 
-    title = metadata.get("title") or "Unknown title"
-    authors = metadata.get("authors") or []
-    journal = metadata.get("journal") or None
-    year = metadata.get("year")
-    abstract = metadata.get("abstract") or None
+    title = bibliographic_information.get("title") or "Unknown title"
+    authors = bibliographic_information.get("authors") or []
+    journal = bibliographic_information.get("journal") or None
+    year = bibliographic_information.get("year")
+    abstract = bibliographic_information.get("abstract") or None
 
     paper = create_paper(
         db,
@@ -110,17 +113,10 @@ async def run_service(
         ingestion_source="multimodal_extraction",
         embedding=embedding if embedding else None,
     )
-    create_extraction(
-        db,
-        paper_id=paper.id,
-        extraction_version="v1",
-        metadata_jsonb=metadata or None,
-        status="success" if not missing_fields else "partial",
-    )
 
     return {
         "pages": pages,
-        "metadata": metadata,
+        "bibliographic_information": bibliographic_information,
         "missing_fields": missing_fields,
         "page_count": len(pages),
     }

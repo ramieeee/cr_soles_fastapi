@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Sequence
 
-from sqlalchemy import text
+from sqlalchemy import select, literal
 from sqlalchemy.orm import Session
 
 from app.models.paper import Paper
@@ -19,27 +19,32 @@ def find_similar_papers(
     min_similarity: float | None = None,
 ) -> list[dict[str, Any]]:
     # 핵심: embedding을 문자열로 만들지 말고, "그대로" 바인딩
-    sql = """
-        SELECT
-            id, title, authors, journal, year, abstract, pdf_url,
-            ingestion_source, ingestion_timestamp,
-            1 - (embedding <=> (:embedding)::vector) AS similarity
-        FROM soles.papers
-        WHERE embedding IS NOT NULL
-    """
+    embedding_vector = list(map(float, embedding))
+    distance = Paper.embedding.cosine_distance(embedding_vector)
+    similarity = (literal(1.0) - distance).label("similarity")
 
-    params: dict[str, Any] = {
-        "embedding": list(map(float, embedding)),
-        "limit": int(limit),
-    }
+    query = (
+        select(
+            Paper.id,
+            Paper.title,
+            Paper.authors,
+            Paper.journal,
+            Paper.year,
+            Paper.abstract,
+            Paper.pdf_url,
+            Paper.ingestion_source,
+            Paper.ingestion_timestamp,
+            similarity,
+        )
+        .where(Paper.embedding.isnot(None))
+        .order_by(distance)
+        .limit(int(limit))
+    )
 
     if min_similarity is not None:
-        sql += " AND (1 - (embedding <=> (:embedding)::vector)) >= :min_similarity"
-        params["min_similarity"] = float(min_similarity)
+        query = query.where(similarity >= float(min_similarity))
 
-    sql += " ORDER BY embedding <=> (:embedding)::vector LIMIT :limit"
-
-    result = db.execute(text(sql), params)
+    result = db.execute(query)
     return [dict(row) for row in result.mappings().all()]
 
 

@@ -51,7 +51,7 @@ def _build_logger(
     Path(log_dir).mkdir(parents=True, exist_ok=True)
     fh = RotatingFileHandler(
         filename=str(Path(log_dir) / log_file),
-        maxBytes=50 * 1024 * 1024,  # 50MB
+        maxBytes=10 * 1024 * 1024,  # 10MB
         backupCount=5,
         encoding="utf-8",
     )

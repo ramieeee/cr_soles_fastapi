@@ -6,8 +6,8 @@ from typing import Any
 import httpx
 
 from app.core.prompts import (
-    get_metadata_determine_completion_prompt,
-    get_metadata_extraction_prompt,
+    get_bibliographic_information_determine_completion_prompt,
+    get_bibliographic_information_extraction_prompt,
 )
 from app.langgraph.multimodal_extraction.state import DocumentState
 from app.clients.embedding_client import EmbeddingClient
@@ -18,11 +18,11 @@ from app.core.config import settings
 
 async def embed_data(state: DocumentState) -> DocumentState:
     set_log("Embed node")
-    metadata = state.get("metadata") or {}
-    set_log(f"Metadata for embedding: {metadata}")
+    bi = state.get("bibliographic_information") or {}
+    set_log(f"Bibliographic information for embedding: {bi}")
 
-    title = metadata.get("title", "")
-    abstract = metadata.get("abstract", "")
+    title = bi.get("title", "")
+    abstract = bi.get("abstract", "")
 
     text_to_embed = f"{title}\n\n{abstract}".strip()
     set_log(f"Text to embed: {text_to_embed[:500]}")

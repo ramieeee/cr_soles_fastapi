@@ -3,6 +3,7 @@ from typing import Any, Optional
 import httpx
 from app.core.config import settings
 from app.core.logger import set_log
+from app.enums.multimodal_extraction.enums import VllmTaskType
 
 
 class VllmClient:
@@ -70,6 +71,7 @@ class VllmClient:
         system_prompt: str,
         user_prompt: str,
         image_b64: Optional[str] = None,
+        task_type: VllmTaskType = VllmTaskType.CHAT,
         image_mime: str = "image/png",
         temperature: float = 0.2,
         max_tokens: Optional[int] = None,
@@ -82,7 +84,7 @@ class VllmClient:
         - system_prompt content
         - whether image_b64 is passed
         """
-        set_log("VllmClient.chat called")
+        set_log(f"VllmClient called with task_type={task_type}")
         messages = [
             {"role": "system", "content": system_prompt},
             self._build_user_message(
@@ -91,10 +93,6 @@ class VllmClient:
                 image_mime=image_mime,
             ),
         ]
-
-        set_log(
-            f"system_prompt: {system_prompt[:20]}, user_prompt: {user_prompt[:20]}, temperature: {temperature}, max_tokens: {max_tokens}, extra: {extra}"
-        )
 
         payload: dict[str, Any] = {
             "model": self.model,
@@ -114,10 +112,12 @@ class VllmClient:
             headers=self._headers(),
             timeout=self.timeout,
         )
-        set_log(f"Response from VllmClient.chat: {response.text[:30]}")
+        set_log(
+            f"Response from VllmClient: {response.text[:30]}... Task_type={task_type}"
+        )
         if response.status_code != 200:
             set_log(
-                f"VllmClient.chat error response: {response.status_code} - {response.text}",
+                f"VllmClient error response: {response.status_code} - {response.text} Task_type={task_type}",
                 level="error",
             )
         response.raise_for_status()

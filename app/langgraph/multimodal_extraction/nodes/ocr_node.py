@@ -9,6 +9,7 @@ from app.core.prompts import get_vlm_ocr_system_prompt
 from app.langgraph.multimodal_extraction.state import DocumentState
 from app.clients.vllm_client import VllmClient
 from app.core.logger import set_log
+from app.enums.multimodal_extraction.enums import VllmTaskType
 
 
 async def run_ocr(state: DocumentState) -> DocumentState:
@@ -53,8 +54,8 @@ async def run_ocr(state: DocumentState) -> DocumentState:
                     system_prompt=system_prompt,
                     user_prompt=f"Page {page_index}: {user_prompt}",
                     image_b64=image_b64,
+                    task_type=VllmTaskType.OCR,
                 )
-                set_log(f"VllmClient.chat called for page {page_index}")
 
                 raw = resp.get("choices", [{}])[0].get("message", {}).get("content", "")
                 raw_text = raw if isinstance(raw, str) else json.dumps(raw)
