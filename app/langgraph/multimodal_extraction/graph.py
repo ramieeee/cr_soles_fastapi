@@ -2,8 +2,8 @@ from functools import lru_cache
 
 from langgraph.graph import END, StateGraph
 
-from app.langgraph.multimodal_extraction.nodes.bibliographic_information_node import (
-    extract_bibliographic_information,
+from app.langgraph.multimodal_extraction.nodes.bibliographic_info_node import (
+    extract_bibliographic_info,
     prepare_retry,
     should_retry,
 )
@@ -15,20 +15,18 @@ from app.langgraph.multimodal_extraction.state import DocumentState
 def build_document_graph():
     graph = StateGraph(DocumentState)
     graph.add_node("ocr", run_ocr)
-    graph.add_node(
-        "extract_bibliographic_information", extract_bibliographic_information
-    )
+    graph.add_node("extract_bibliographic_info", extract_bibliographic_info)
     graph.add_node("prepare_retry", prepare_retry)
     graph.add_node("embed", embed_data)
 
     graph.set_entry_point("ocr")
-    graph.add_edge("ocr", "extract_bibliographic_information")
+    graph.add_edge("ocr", "extract_bibliographic_info")
     graph.add_conditional_edges(
-        "extract_bibliographic_information",
+        "extract_bibliographic_info",
         should_retry,
         {"retry": "prepare_retry", "end": "embed"},
     )
-    graph.add_edge("prepare_retry", "extract_bibliographic_information")
+    graph.add_edge("prepare_retry", "extract_bibliographic_info")
     graph.add_edge("embed", END)
     return graph.compile()
 

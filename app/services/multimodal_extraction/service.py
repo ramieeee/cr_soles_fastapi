@@ -93,14 +93,14 @@ async def run_service(
         set_log("No similar documents found in the database.")
         result["similar_documents"] = []
 
-    bibliographic_information = result.get("bibliographic_information") or {}
+    bibliographic_info = result.get("bibliographic_info") or {}
     missing_fields = result.get("missing_fields", [])
 
-    title = bibliographic_information.get("title") or "Unknown title"
-    authors = bibliographic_information.get("authors") or []
-    journal = bibliographic_information.get("journal") or None
-    year = bibliographic_information.get("year")
-    abstract = bibliographic_information.get("abstract") or None
+    title = bibliographic_info.get("title") or "Unknown title"
+    authors = bibliographic_info.get("authors") or []
+    journal = bibliographic_info.get("journal") or None
+    year = bibliographic_info.get("year")
+    abstract = bibliographic_info.get("abstract") or None
 
     paper = create_paper(
         db,
@@ -116,7 +116,7 @@ async def run_service(
 
     return {
         "pages": pages,
-        "bibliographic_information": bibliographic_information,
+        "bibliographic_info": bibliographic_info,
         "missing_fields": missing_fields,
         "page_count": len(pages),
     }

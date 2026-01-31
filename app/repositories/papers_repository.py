@@ -48,6 +48,17 @@ def find_similar_papers(
     return [dict(row) for row in result.mappings().all()]
 
 
+def list_papers(
+    db: Session,
+    *,
+    offset: int = 0,
+    limit: int = 100,
+) -> list[Paper]:
+    query = select(Paper).offset(int(offset)).limit(int(limit))
+    result = db.execute(query)
+    return result.scalars().all()
+
+
 def create_paper(
     db: Session,
     *,

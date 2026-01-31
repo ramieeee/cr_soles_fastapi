@@ -47,28 +47,28 @@ def get_vlm_ocr_system_prompt() -> str:
     return vlm_ocr_system_prompt
 
 
-bibliographic_information_extraction_system_prompt = """
+bibliographic_info_extraction_system_prompt = """
     Extract bibliographic information from the OCR text.
     Return ONLY valid JSON with keys: title, authors, journal, year, abstract.
     Use empty string for missing text fields, empty array for authors, and null for year.
 """
 
 
-def get_bibliographic_information_extraction_prompt(
+def get_bibliographic_info_extraction_prompt(
     ocr_text: str, retry_focus: list[str] | None
 ) -> str:
     focus = ""
     if retry_focus:
         focus = f"Focus on missing fields: {', '.join(retry_focus)}.\n"
     return (
-        f"{bibliographic_information_extraction_system_prompt}\n"
+        f"{bibliographic_info_extraction_system_prompt}\n"
         f"{focus}"
         "OCR TEXT:\n"
         f"{ocr_text}\n"
     )
 
 
-bibliographic_information_determine_completion_prompt = """
+bibliographic_info_determine_completion_prompt = """
     # Task:
     Determine if the extracted bibliographic information is complete.
     
@@ -87,5 +87,5 @@ bibliographic_information_determine_completion_prompt = """
 """
 
 
-def get_bibliographic_information_determine_completion_prompt() -> str:
-    return bibliographic_information_determine_completion_prompt
+def get_bibliographic_info_determine_completion_prompt() -> str:
+    return bibliographic_info_determine_completion_prompt

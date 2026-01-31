@@ -24,8 +24,6 @@ async def run_ocr(state: DocumentState) -> DocumentState:
     # page_images_b64 = page_images_b64[:3]
     page_results: list[dict] = []
 
-    # NOTE: httpx.AsyncClient(timeout=300) alone is NOT enough here because
-    # VllmClient.chat() passes its own timeout to client.post().
     vllm_client = VllmClient(
         port="", timeout_s=300.0
     )  # port is empty when run on runpod

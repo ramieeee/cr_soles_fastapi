@@ -6,8 +6,8 @@ from typing import Any
 import httpx
 
 from app.core.prompts import (
-    get_bibliographic_information_determine_completion_prompt,
-    get_bibliographic_information_extraction_prompt,
+    get_bibliographic_info_determine_completion_prompt,
+    get_bibliographic_info_extraction_prompt,
 )
 from app.langgraph.multimodal_extraction.state import DocumentState
 from app.clients.vllm_client import VllmClient
@@ -32,20 +32,20 @@ def _extract_json(text: str) -> dict[str, Any] | None:
         return None
 
 
-def _normalize_bibliographic_information(
-    bibliographic_information: dict[str, Any],
+def _normalize_bibliographic_info(
+    bibliographic_info: dict[str, Any],
 ) -> dict[str, Any]:
     normalized: dict[str, Any] = {}
-    title = bibliographic_information.get("title") or ""
-    journal = bibliographic_information.get("journal") or ""
-    abstract = bibliographic_information.get("abstract") or ""
-    authors = bibliographic_information.get("authors") or []
+    title = bibliographic_info.get("title") or ""
+    journal = bibliographic_info.get("journal") or ""
+    abstract = bibliographic_info.get("abstract") or ""
+    authors = bibliographic_info.get("authors") or []
     if isinstance(authors, str):
         authors = [author.strip() for author in authors.split(",") if author.strip()]
     if not isinstance(authors, list):
         authors = []
 
-    year = bibliographic_information.get("year")
+    year = bibliographic_info.get("year")
     if isinstance(year, str):
         year = year.strip()
         if year.isdigit():
@@ -62,22 +62,22 @@ def _normalize_bibliographic_information(
     return normalized
 
 
-def _find_missing_fields(bibliographic_information: dict[str, Any]) -> list[str]:
+def _find_missing_fields(bibliographic_info: dict[str, Any]) -> list[str]:
     missing: list[str] = []
-    if not bibliographic_information.get("title"):
+    if not bibliographic_info.get("title"):
         missing.append("title")
-    if not bibliographic_information.get("authors"):
+    if not bibliographic_info.get("authors"):
         missing.append("authors")
-    if not bibliographic_information.get("journal"):
+    if not bibliographic_info.get("journal"):
         missing.append("journal")
-    if not isinstance(bibliographic_information.get("year"), int):
+    if not isinstance(bibliographic_info.get("year"), int):
         missing.append("year")
-    if not bibliographic_information.get("abstract"):
+    if not bibliographic_info.get("abstract"):
         missing.append("abstract")
     return missing
 
 
-def _merge_bibliographic_information(
+def _merge_bibliographic_info(
     base: dict[str, Any] | None,
     incoming: dict[str, Any],
 ) -> dict[str, Any]:
@@ -98,7 +98,7 @@ def _merge_bibliographic_information(
     if incoming_abstract and len(incoming_abstract) >= len(current_abstract):
         merged["abstract"] = incoming_abstract
 
-    return _normalize_bibliographic_information(merged)
+    return _normalize_bibliographic_info(merged)
 
 
 def _collect_ocr_text(ocr_pages: list[dict], max_pages: int) -> str:
@@ -115,18 +115,17 @@ def _is_complete_response(text: str) -> bool:
     return normalized.startswith("complete")
 
 
-async def extract_bibliographic_information(state: DocumentState) -> DocumentState:
-    set_log("Extract_bibliographic_information node")
+async def extract_bibliographic_info(state: DocumentState) -> DocumentState:
+    set_log("Extract_bibliographic_info node")
     ocr_pages = state.get("ocr_pages") or []
     retry_focus = state.get("retry_focus") or []
 
-    # Same rationale as OCR node: VllmClient.chat() uses its own timeout.
     vllm_client = VllmClient(port="", timeout_s=300.0)
-    bibliographic_information: dict[str, Any] = _normalize_bibliographic_information(
-        state.get("bibliographic_information") or {}
+    bibliographic_info: dict[str, Any] = _normalize_bibliographic_info(
+        state.get("bibliographic_info") or {}
     )
     raw_text = ""
-    bibliographic_information_complete = False
+    bibliographic_info_complete = False
 
     async with httpx.AsyncClient(timeout=300.0, trust_env=False) as client:
         for page_count in range(1, len(ocr_pages) + 1):
@@ -134,14 +133,12 @@ async def extract_bibliographic_information(state: DocumentState) -> DocumentSta
             if not ocr_text:
                 continue
 
-            prompt = get_bibliographic_information_extraction_prompt(
-                ocr_text, retry_focus
-            )
+            prompt = get_bibliographic_info_extraction_prompt(ocr_text, retry_focus)
             response_payload = await vllm_client.chat(
                 client=client,
                 system_prompt=prompt,
                 user_prompt="Extract the bibliographic information",
-                task_type=VllmTaskType.BIBLIOGRAPHIC_INFORMATION_EXTRACTION,
+                task_type=VllmTaskType.bibliographic_info_EXTRACTION,
             )
 
             raw_text = (
@@ -150,15 +147,13 @@ async def extract_bibliographic_information(state: DocumentState) -> DocumentSta
                 .get("content", "")
             )
             raw_text = str(raw_text).strip()
-            bibliographic_information_json = _extract_json(raw_text) or {}
-            bibliographic_information = _merge_bibliographic_information(
-                bibliographic_information,
-                _normalize_bibliographic_information(bibliographic_information_json),
+            bibliographic_info_json = _extract_json(raw_text) or {}
+            bibliographic_info = _merge_bibliographic_info(
+                bibliographic_info,
+                _normalize_bibliographic_info(bibliographic_info_json),
             )
 
-            completion_prompt = (
-                get_bibliographic_information_determine_completion_prompt()
-            )
+            completion_prompt = get_bibliographic_info_determine_completion_prompt()
             completion_payload = await vllm_client.chat(
                 client=client,
                 system_prompt=str(completion_prompt),
@@ -166,7 +161,7 @@ async def extract_bibliographic_information(state: DocumentState) -> DocumentSta
                     "OCR TEXT:\n"
                     f"{ocr_text}\n\n"
                     "BIBLIOGRAPHIC INFORMATION JSON:\n"
-                    f"{json.dumps(bibliographic_information, ensure_ascii=True)}"
+                    f"{json.dumps(bibliographic_info, ensure_ascii=True)}"
                 ),
             )
             completion_text = (
@@ -174,21 +169,19 @@ async def extract_bibliographic_information(state: DocumentState) -> DocumentSta
                 .get("message", {})
                 .get("content", "")
             )
-            bibliographic_information_complete = _is_complete_response(
-                str(completion_text)
-            )
-            if bibliographic_information_complete:
+            bibliographic_info_complete = _is_complete_response(str(completion_text))
+            if bibliographic_info_complete:
                 break
 
-    missing_fields = _find_missing_fields(bibliographic_information)
-    if not bibliographic_information_complete and not missing_fields:
+    missing_fields = _find_missing_fields(bibliographic_info)
+    if not bibliographic_info_complete and not missing_fields:
         missing_fields = ["incomplete"]
 
     return {
-        "bibliographic_information": bibliographic_information,
-        "bibliographic_information_raw": raw_text,
+        "bibliographic_info": bibliographic_info,
+        "bibliographic_info_raw": raw_text,
         "missing_fields": missing_fields,
-        "bibliographic_information_complete": bibliographic_information_complete,
+        "bibliographic_info_complete": bibliographic_info_complete,
     }
 
 
@@ -199,12 +192,10 @@ def prepare_retry(state: DocumentState) -> DocumentState:
 
 
 def should_retry(state: DocumentState) -> str:
-    bibliographic_information_complete = bool(
-        state.get("bibliographic_information_complete")
-    )
+    bibliographic_info_complete = bool(state.get("bibliographic_info_complete"))
     attempts = int(state.get("attempts") or 0)
     max_attempts = int(state.get("max_attempts") or 1)
-    if not bibliographic_information_complete and attempts < max_attempts:
+    if not bibliographic_info_complete and attempts < max_attempts:
         set_log("Bibliographic information incomplete, will retry.")
         return "retry"
     set_log(
