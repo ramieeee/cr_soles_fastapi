@@ -128,11 +128,14 @@ async def extract_bibliographic_info(state: DocumentState) -> DocumentState:
     bibliographic_info_complete = False
 
     async with httpx.AsyncClient(timeout=300.0, trust_env=False) as client:
-        for page_count in range(1, len(ocr_pages) + 1):
+        # limit to first 5 pages to extract bibliographic info
+        ocr_page_len = 5 if len(ocr_pages) > 5 else len(ocr_pages)
+        for page_count in range(1, ocr_page_len + 1):
             ocr_text = _collect_ocr_text(ocr_pages, page_count)
             if not ocr_text:
                 continue
 
+            # call VLLM to extract bibliographic info
             prompt = get_bibliographic_info_extraction_prompt(ocr_text, retry_focus)
             response_payload = await vllm_client.chat(
                 client=client,
@@ -141,6 +144,7 @@ async def extract_bibliographic_info(state: DocumentState) -> DocumentState:
                 task_type=VllmTaskType.bibliographic_info_EXTRACTION,
             )
 
+            # extract response from vLLM
             raw_text = (
                 response_payload.get("choices", [{}])[0]
                 .get("message", {})
@@ -153,6 +157,7 @@ async def extract_bibliographic_info(state: DocumentState) -> DocumentState:
                 _normalize_bibliographic_info(bibliographic_info_json),
             )
 
+            # check completeness
             completion_prompt = get_bibliographic_info_determine_completion_prompt()
             completion_payload = await vllm_client.chat(
                 client=client,
@@ -169,6 +174,8 @@ async def extract_bibliographic_info(state: DocumentState) -> DocumentState:
                 .get("message", {})
                 .get("content", "")
             )
+
+            # determine if bibliographic info is complete
             bibliographic_info_complete = _is_complete_response(str(completion_text))
             if bibliographic_info_complete:
                 break
