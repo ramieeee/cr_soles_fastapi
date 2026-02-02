@@ -14,6 +14,7 @@ router_prefix = "/multimodal_extraction"
 @router.post(f"{router_prefix}/process", tags=["document"])
 async def process_document(
     pdf: UploadFile = File(...),
+    ingestion_source: str = Form("web"),
     prompt: str = Form("Describe the document"),
     db: Session = Depends(get_db),
 ):
