@@ -22,7 +22,9 @@ async def process_document(
     pdf_bytes = await pdf.read()
 
     try:
-        result = await run_service(pdf_bytes, pdf.content_type, prompt, db)
+        result = await run_service(
+            pdf_bytes, ingestion_source, pdf.content_type, prompt, db
+        )
         set_log("Multimodal_extraction done", level="info")
         return result
     except ValueError as exc:

@@ -30,7 +30,11 @@ def _ensure_supported_pdf(content_type: str | None) -> None:
 
 
 async def run_service(
-    pdf_bytes: bytes, content_type: str | None, prompt: str, db: Session
+    pdf_bytes: bytes,
+    ingestion_source: str,
+    content_type: str | None,
+    prompt: str,
+    db: Session,
 ) -> dict:
     _ensure_supported_pdf(content_type)
 
@@ -110,7 +114,7 @@ async def run_service(
         year=year,
         abstract=abstract,
         pdf_url=None,
-        ingestion_source="multimodal_extraction",
+        ingestion_source=ingestion_source,
         embedding=embedding if embedding else None,
     )
 
