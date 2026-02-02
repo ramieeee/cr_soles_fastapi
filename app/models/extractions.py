@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.core.db import Base
 
 
-class Extraction(Base):
+class Extractions(Base):
     __tablename__ = "extractions"
     __table_args__ = (
         CheckConstraint(
@@ -45,20 +45,20 @@ class Extraction(Base):
     status: Mapped[str] = mapped_column(Text, nullable=False)
 
     paper = relationship(
-        "Paper",
+        "Papers",
         back_populates="extractions",
-        primaryjoin="Extraction.paper_id == Paper.id",
+        primaryjoin="Extractions.paper_id == Papers.id",
         foreign_keys=paper_id,
         passive_deletes=True,
     )
     evaluations = relationship(
-        "Evaluation",
-        back_populates="extraction",
+        "Evaluations",
+        back_populates="extractions",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
     agents_logs = relationship(
-        "AgentLog",
-        back_populates="extraction",
+        "AgentLogs",
+        back_populates="extractions",
         passive_deletes=True,
     )

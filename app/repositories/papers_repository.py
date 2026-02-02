@@ -5,10 +5,10 @@ from typing import Any, Sequence
 from sqlalchemy import select, literal
 from sqlalchemy.orm import Session
 
-from app.models.paper import Paper
-from app.models.extraction import Extraction
-from app.models.evaluation import Evaluation
-from app.models.agents_log import AgentLog
+from app.models.papers import Papers
+from app.models.extractions import Extractions
+from app.models.evaluations import Evaluations
+from app.models.agents_logs import AgentLogs
 
 
 def find_similar_papers(
@@ -20,23 +20,23 @@ def find_similar_papers(
 ) -> list[dict[str, Any]]:
     # 핵심: embedding을 문자열로 만들지 말고, "그대로" 바인딩
     embedding_vector = list(map(float, embedding))
-    distance = Paper.embedding.cosine_distance(embedding_vector)
+    distance = Papers.embedding.cosine_distance(embedding_vector)
     similarity = (literal(1.0) - distance).label("similarity")
 
     query = (
         select(
-            Paper.id,
-            Paper.title,
-            Paper.authors,
-            Paper.journal,
-            Paper.year,
-            Paper.abstract,
-            Paper.pdf_url,
-            Paper.ingestion_source,
-            Paper.ingestion_timestamp,
+            Papers.id,
+            Papers.title,
+            Papers.authors,
+            Papers.journal,
+            Papers.year,
+            Papers.abstract,
+            Papers.pdf_url,
+            Papers.ingestion_source,
+            Papers.ingestion_timestamp,
             similarity,
         )
-        .where(Paper.embedding.isnot(None))
+        .where(Papers.embedding.isnot(None))
         .order_by(distance)
         .limit(int(limit))
     )
@@ -53,8 +53,8 @@ def list_papers(
     *,
     offset: int = 0,
     limit: int = 100,
-) -> list[Paper]:
-    query = select(Paper).offset(int(offset)).limit(int(limit))
+) -> list[Papers]:
+    query = select(Papers).offset(int(offset)).limit(int(limit))
     result = db.execute(query)
     return result.scalars().all()
 
@@ -70,8 +70,8 @@ def create_paper(
     pdf_url: str | None = None,
     ingestion_source: str | None = None,
     embedding: list[float] | None = None,
-) -> Paper:
-    paper = Paper(
+) -> Papers:
+    paper = Papers(
         title=title,
         authors=authors or [],
         journal=journal,
@@ -97,8 +97,8 @@ def create_extraction(
     outcomes_jsonb: dict | None = None,
     risk_of_bias_jsonb: dict | None = None,
     status: str = "success",
-) -> Extraction:
-    extraction = Extraction(
+) -> Extractions:
+    extraction = Extractions(
         paper_id=paper_id,
         extraction_version=extraction_version,
         metadata_jsonb=metadata_jsonb,
@@ -120,8 +120,8 @@ def create_evaluation(
     evaluator_id: str,
     agreement_scores: dict | None = None,
     notes: str | None = None,
-) -> Evaluation:
-    evaluation = Evaluation(
+) -> Evaluations:
+    evaluation = Evaluations(
         extraction_id=extraction_id,
         evaluator_id=evaluator_id,
         agreement_scores=agreement_scores,
@@ -144,8 +144,8 @@ def create_agent_log(
     node_name: str | None = None,
     prompt_hash: str | None = None,
     model_name: str | None = None,
-) -> AgentLog:
-    log = AgentLog(
+) -> AgentLogs:
+    log = AgentLogs(
         paper_id=paper_id,
         extraction_id=extraction_id,
         agent_name=agent_name,

@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.core.db import Base
 
 
-class AgentLog(Base):
+class AgentLogs(Base):
     __tablename__ = "agents_logs"
     __table_args__ = {"schema": "soles"}
 
@@ -40,16 +40,16 @@ class AgentLog(Base):
     )
 
     paper = relationship(
-        "Paper",
+        "Papers",
         back_populates="agents_logs",
-        primaryjoin="AgentLog.paper_id == Paper.id",
+        primaryjoin="AgentLogs.paper_id == Papers.id",
         foreign_keys=paper_id,
         passive_deletes=True,
     )
     extraction = relationship(
-        "Extraction",
+        "Extractions",
         back_populates="agents_logs",
-        primaryjoin="AgentLog.extraction_id == Extraction.id",
+        primaryjoin="AgentLogs.extraction_id == Extractions.id",
         foreign_keys=extraction_id,
         passive_deletes=True,
     )

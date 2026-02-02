@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.core.db import Base
 
 
-class Evaluation(Base):
+class Evaluations(Base):
     __tablename__ = "evaluations"
     __table_args__ = {"schema": "soles"}
 
@@ -33,9 +33,9 @@ class Evaluation(Base):
     )
 
     extraction = relationship(
-        "Extraction",
+        "Extractions",
         back_populates="evaluations",
-        primaryjoin="Evaluation.extraction_id == Extraction.id",
+        primaryjoin="Evaluations.extraction_id == Extractions.id",
         foreign_keys=extraction_id,
         passive_deletes=True,
     )

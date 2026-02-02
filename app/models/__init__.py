@@ -1,7 +1,7 @@
 from app.core.db import Base
-from app.models.paper import Paper
-from app.models.extraction import Extraction
-from app.models.evaluation import Evaluation
-from app.models.agents_log import AgentLog
+from app.models.papers import Papers
+from app.models.extractions import Extractions
+from app.models.evaluations import Evaluations
+from app.models.agents_logs import AgentLogs
 
-__all__ = ["Base", "Paper", "Extraction", "Evaluation", "AgentLog"]
+__all__ = ["Base", "Papers", "Extractions", "Evaluations", "AgentLogs"]

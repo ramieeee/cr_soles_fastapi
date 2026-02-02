@@ -11,7 +11,7 @@ from app.core.db import Base
 from app.core.config import settings
 
 
-class Paper(Base):
+class Papers(Base):
     __tablename__ = "papers"
     __table_args__ = {"schema": "soles"}
 
@@ -41,13 +41,13 @@ class Paper(Base):
     )
 
     extractions = relationship(
-        "Extraction",
-        back_populates="paper",
+        "Extractions",
+        back_populates="papers",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
     agents_logs = relationship(
-        "AgentLog",
-        back_populates="paper",
+        "AgentLogs",
+        back_populates="papers",
         passive_deletes=True,
     )
