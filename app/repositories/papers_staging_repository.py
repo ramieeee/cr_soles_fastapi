@@ -1,26 +1,27 @@
 from __future__ import annotations
-
-from typing import Any, Sequence
-
-from sqlalchemy import select, literal
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.models.papers_staging import PapersStaging
 
-from app.models.papers import Papers
 
-
-def list_papers(
+def list_papers_staging(
     db: Session,
     *,
     offset: int = 0,
     limit: int = 100,
-) -> list[Papers]:
-    query = select(Papers).offset(int(offset)).limit(int(limit))
+) -> list[PapersStaging]:
+    query = (
+        select(PapersStaging)
+        .offset(int(offset))
+        .where(PapersStaging.is_approved.is_(False))
+        .limit(int(limit))
+    )
     result = db.execute(query)
     return result.scalars().all()
 
 
-def create_paper(
+def create_papers_staging(
     db: Session,
     *,
     title: str,
@@ -31,8 +32,8 @@ def create_paper(
     pdf_url: str | None = None,
     ingestion_source: str | None = None,
     embedding: list[float] | None = None,
-) -> Papers:
-    paper = Papers(
+) -> PapersStaging:
+    paper_staging = PapersStaging(
         title=title,
         authors=authors or [],
         journal=journal,
@@ -42,6 +43,6 @@ def create_paper(
         ingestion_source=ingestion_source,
         embedding=embedding,
     )
-    db.add(paper)
+    db.add(paper_staging)
     db.flush()
-    return paper
+    return paper_staging
