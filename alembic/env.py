@@ -12,11 +12,12 @@ if PROJECT_ROOT not in sys.path:
 
 from app.core.config import settings
 from app.models import Base  # noqa: E402
-import app.models  # noqa: E402,F401
+
+# import app.models  # noqa: E402,F401
 
 config = context.config
 
-config.set_main_option("sqlalchemy.url", settings.database_url)
+config.set_main_option("sqlalchemy.url", settings.supabase_db_url)
 
 target_metadata = Base.metadata
 
