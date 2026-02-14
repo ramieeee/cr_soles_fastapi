@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -24,6 +27,7 @@ def list_papers_staging(
 def create_papers_staging(
     db: Session,
     *,
+    paper_id: UUID | None = None,
     title: str,
     authors: list[str] | None = None,
     journal: str | None = None,
@@ -43,6 +47,8 @@ def create_papers_staging(
         ingestion_source=ingestion_source,
         embedding=embedding,
     )
+    if paper_id is not None:
+        paper_staging.id = paper_id
     db.add(paper_staging)
     db.flush()
     return paper_staging

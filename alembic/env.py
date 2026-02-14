@@ -21,6 +21,15 @@ config.set_main_option("sqlalchemy.url", settings.supabase_db_url)
 
 target_metadata = Base.metadata
 
+ALLOWED_SCHEMAS = {"public", "soles"}  # <-- 본인 스키마에 맞게 조정
+
+
+def include_name(name, type_, parent_names):
+    schema = parent_names.get("schema_name")
+    # schema가 None인 경우는 기본 스키마로 취급될 수 있어 public로 간주
+    schema = schema or "public"
+    return schema in ALLOWED_SCHEMAS
+
 
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
@@ -30,6 +39,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         include_schemas=True,
+        include_name=include_name,
     )
 
     with context.begin_transaction():
@@ -48,6 +58,7 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             include_schemas=True,
+            include_name=include_name,
         )
 
         with context.begin_transaction():

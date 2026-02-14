@@ -51,3 +51,9 @@ class Papers(Base):
         back_populates="papers",
         passive_deletes=True,
     )
+
+    staging_items = relationship(
+        "PapersStaging",
+        back_populates="paper",
+        passive_deletes=True,
+    )

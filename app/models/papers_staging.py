@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Text, Integer, DateTime, func, text
+from sqlalchemy import Text, Integer, DateTime, func, text, ForeignKey, Identity
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from pgvector.sqlalchemy import Vector
@@ -15,10 +15,12 @@ class PapersStaging(Base):
     __tablename__ = "papers_staging"
     __table_args__ = {"schema": "soles"}
 
-    id: Mapped[UUID] = mapped_column(
+    idx: Mapped[int] = mapped_column(Integer, Identity(), primary_key=True)
+    id: Mapped[UUID | None] = mapped_column(
         UUID(as_uuid=True),
-        primary_key=True,
-        server_default=text("gen_random_uuid()"),
+        ForeignKey("soles.papers.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
     )
     is_approved: Mapped[bool] = mapped_column(
         nullable=False, server_default=text("false")
@@ -46,14 +48,10 @@ class PapersStaging(Base):
         Vector(settings.embedding_dimension)
     )
 
-    extractions = relationship(
-        "Extractions",
-        back_populates="papers",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
-    )
-    agents_logs = relationship(
-        "AgentLogs",
-        back_populates="papers_staging",
+    paper = relationship(
+        "Papers",
+        back_populates="staging_items",
+        primaryjoin="PapersStaging.id == Papers.id",
+        foreign_keys=id,
         passive_deletes=True,
     )
