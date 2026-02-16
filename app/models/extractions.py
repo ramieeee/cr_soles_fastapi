@@ -16,7 +16,7 @@ class Extractions(Base):
             "status IN ('success', 'partial', 'failed')",
             name="ck_extractions_status",
         ),
-        {"schema": "soles"},
+        {"schema": "cr_soles"},
     )
 
     id: Mapped[UUID] = mapped_column(
@@ -26,7 +26,7 @@ class Extractions(Base):
     )
     paper_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("soles.papers.id", ondelete="CASCADE"),
+        ForeignKey("cr_soles.papers.id", ondelete="CASCADE"),
         nullable=False,
     )
     extraction_version: Mapped[str] = mapped_column(Text, nullable=False)
@@ -44,7 +44,7 @@ class Extractions(Base):
     )
     status: Mapped[str] = mapped_column(Text, nullable=False)
 
-    paper = relationship(
+    papers = relationship(
         "Papers",
         back_populates="extractions",
         primaryjoin="Extractions.paper_id == Papers.id",

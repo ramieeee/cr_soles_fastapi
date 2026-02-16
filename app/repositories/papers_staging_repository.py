@@ -4,8 +4,47 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy import literal
+from typing import Sequence, Any
 
 from app.models.papers_staging import PapersStaging
+
+
+def find_similar_papers(
+    db: Session,
+    *,
+    embedding: Sequence[float],
+    limit: int = 10,
+    min_similarity: float | None = None,
+) -> list[dict[str, Any]]:
+    # 핵심: embedding을 문자열로 만들지 말고, "그대로" 바인딩
+    embedding_vector = list(map(float, embedding))
+    distance = PapersStaging.embedding.cosine_distance(embedding_vector)
+    similarity = (literal(1.0) - distance).label("similarity")
+
+    query = (
+        select(
+            PapersStaging.id,
+            PapersStaging.title,
+            PapersStaging.authors,
+            PapersStaging.journal,
+            PapersStaging.year,
+            PapersStaging.abstract,
+            PapersStaging.pdf_url,
+            PapersStaging.ingestion_source,
+            PapersStaging.ingestion_timestamp,
+            similarity,
+        )
+        .where(PapersStaging.embedding.isnot(None))
+        .order_by(distance)
+        .limit(int(limit))
+    )
+
+    if min_similarity is not None:
+        query = query.where(similarity >= float(min_similarity))
+
+    result = db.execute(query)
+    return [dict(row) for row in result.mappings().all()]
 
 
 def list_papers_staging(

@@ -13,12 +13,12 @@ from app.core.config import settings
 
 class PapersStaging(Base):
     __tablename__ = "papers_staging"
-    __table_args__ = {"schema": "soles"}
+    __table_args__ = {"schema": "cr_soles"}
 
     idx: Mapped[int] = mapped_column(Integer, Identity(), primary_key=True)
     id: Mapped[UUID | None] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("soles.papers.id", ondelete="CASCADE"),
+        ForeignKey("cr_soles.papers.id", ondelete="CASCADE"),
         nullable=True,
         index=True,
     )
@@ -48,7 +48,7 @@ class PapersStaging(Base):
         Vector(settings.embedding_dimension)
     )
 
-    paper = relationship(
+    papers = relationship(
         "Papers",
         back_populates="staging_items",
         primaryjoin="PapersStaging.id == Papers.id",

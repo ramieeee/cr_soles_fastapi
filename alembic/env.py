@@ -21,7 +21,7 @@ config.set_main_option("sqlalchemy.url", settings.supabase_db_url)
 
 target_metadata = Base.metadata
 
-ALLOWED_SCHEMAS = {"public", "soles"}  # <-- 본인 스키마에 맞게 조정
+ALLOWED_SCHEMAS = {"public", "cr_soles"}
 
 
 def include_name(name, type_, parent_names):

@@ -13,7 +13,7 @@ from app.core.config import settings
 
 class Papers(Base):
     __tablename__ = "papers"
-    __table_args__ = {"schema": "soles"}
+    __table_args__ = {"schema": "cr_soles"}
 
     id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -54,6 +54,6 @@ class Papers(Base):
 
     staging_items = relationship(
         "PapersStaging",
-        back_populates="paper",
+        back_populates="papers",
         passive_deletes=True,
     )

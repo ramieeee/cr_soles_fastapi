@@ -11,8 +11,8 @@ router = APIRouter()
 router_prefix = "/multimodal_extraction"
 
 
-@router.post(f"{router_prefix}/process", tags=["document"])
-async def process_document(
+@router.post(f"{router_prefix}/extract", tags=["document"])
+async def extract_document(
     pdf: UploadFile = File(...),
     ingestion_source: str = Form("web"),
     prompt: str = Form("Describe the document"),
@@ -28,10 +28,10 @@ async def process_document(
         set_log("Multimodal_extraction done", level="info")
         return result
     except ValueError as exc:
-        set_log(f"ValueError in process_document: {exc}", level="error")
+        set_log(f"ValueError in extract_document: {exc}", level="error")
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
-        set_log(f"Exception in process_document: {exc}", level="error")
+        set_log(f"Exception in extract_document: {exc}", level="error")
         raise HTTPException(
             status_code=502, detail=f"VLLM request failed: {exc}"
         ) from exc

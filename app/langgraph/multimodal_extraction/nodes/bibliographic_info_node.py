@@ -141,7 +141,7 @@ async def extract_bibliographic_info(state: DocumentState) -> DocumentState:
                 client=client,
                 system_prompt=prompt,
                 user_prompt="Extract the bibliographic information",
-                task_type=VllmTaskType.bibliographic_info_EXTRACTION,
+                task_type=VllmTaskType.BIBLIOGRAPHIC_INFO_EXTRACTION,
             )
 
             # extract response from vLLM

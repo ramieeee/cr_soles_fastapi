@@ -20,9 +20,9 @@ class Settings(BaseSettings):
 
     supabase_db_url: str | None = None
     supabase_db_pw: str | None = None
-    ollama_base_url: str
-    ollama_port: int
-    ollama_model: str
+    # ollama_base_url: str
+    # ollama_port: int
+    # ollama_model: str
 
     vllm_base_url: str
     vllm_port: int

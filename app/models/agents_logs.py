@@ -11,7 +11,7 @@ from app.core.db import Base
 
 class AgentLogs(Base):
     __tablename__ = "agents_logs"
-    __table_args__ = {"schema": "soles"}
+    __table_args__ = {"schema": "cr_soles"}
 
     id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -20,11 +20,11 @@ class AgentLogs(Base):
     )
     paper_id: Mapped[UUID | None] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("soles.papers.id", ondelete="SET NULL"),
+        ForeignKey("cr_soles.papers.id", ondelete="SET NULL"),
     )
     extraction_id: Mapped[UUID | None] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("soles.extractions.id", ondelete="SET NULL"),
+        ForeignKey("cr_soles.extractions.id", ondelete="SET NULL"),
     )
     agent_name: Mapped[str] = mapped_column(Text, nullable=False)
     raw_output: Mapped[str | None] = mapped_column(Text)
@@ -39,14 +39,14 @@ class AgentLogs(Base):
         server_default=func.now(),
     )
 
-    paper = relationship(
+    papers = relationship(
         "Papers",
         back_populates="agents_logs",
         primaryjoin="AgentLogs.paper_id == Papers.id",
         foreign_keys=paper_id,
         passive_deletes=True,
     )
-    extraction = relationship(
+    extractions = relationship(
         "Extractions",
         back_populates="agents_logs",
         primaryjoin="AgentLogs.extraction_id == Extractions.id",

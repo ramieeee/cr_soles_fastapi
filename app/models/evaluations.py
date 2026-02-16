@@ -11,7 +11,7 @@ from app.core.db import Base
 
 class Evaluations(Base):
     __tablename__ = "evaluations"
-    __table_args__ = {"schema": "soles"}
+    __table_args__ = {"schema": "cr_soles"}
 
     id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -20,7 +20,7 @@ class Evaluations(Base):
     )
     extraction_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("soles.extractions.id", ondelete="CASCADE"),
+        ForeignKey("cr_soles.extractions.id", ondelete="CASCADE"),
         nullable=False,
     )
     evaluator_id: Mapped[str] = mapped_column(Text, nullable=False)
@@ -32,7 +32,7 @@ class Evaluations(Base):
         server_default=func.now(),
     )
 
-    extraction = relationship(
+    extractions = relationship(
         "Extractions",
         back_populates="evaluations",
         primaryjoin="Evaluations.extraction_id == Extractions.id",

@@ -7,9 +7,11 @@ import fitz  # PyMuPDF
 from app.langgraph.multimodal_extraction import get_document_graph
 from app.core.logger import set_log
 from app.repositories.papers_repository import (
-    find_similar_papers,
     create_paper,
-    create_extraction,
+)
+from app.repositories.papers_staging_repository import (
+    find_similar_papers,
+    create_papers_staging,
 )
 from sqlalchemy.orm import Session
 
@@ -67,8 +69,12 @@ async def run_service(
     }
 
     set_log("Invoking document graph")
+
+    # invoke the graph
     result = await graph.ainvoke(state)
     pages = result.get("ocr_pages", [])
+
+    # embedding and similar document search
     embedding = result.get("embedding")
     similar_doc = []
     if embedding:
@@ -106,14 +112,22 @@ async def run_service(
     year = bibliographic_info.get("year")
     abstract = bibliographic_info.get("abstract") or None
 
-    paper = create_paper(
+    # title = "Unknown title"
+    # authors = ["test"]
+    # journal = "nature"
+    # year = 2025
+    # abstract = "This is a test abstract."
+    # pdf_url = None
+    # embedding = None
+
+    paper = create_papers_staging(
         db,
         title=title,
         authors=authors,
         journal=journal,
         year=year,
         abstract=abstract,
-        pdf_url=None,
+        pdf_url=pdf_url,
         ingestion_source=ingestion_source,
         embedding=embedding if embedding else None,
     )
@@ -123,4 +137,12 @@ async def run_service(
         "bibliographic_info": bibliographic_info,
         "missing_fields": missing_fields,
         "page_count": len(pages),
+        "paper_id": paper.id,
     }
+    # return {
+    #     "pages": [],
+    #     "bibliographic_info": {},
+    #     "missing_fields": {},
+    #     "page_count": 0,
+    #     "paper_id": paper.id,
+    # }
