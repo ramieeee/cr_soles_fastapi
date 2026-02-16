@@ -13,21 +13,6 @@ from app.repositories.papers_staging_repository import (
 from sqlalchemy.orm import Session
 
 
-SUPPORTED_PDF_TYPES = {
-    "application/pdf",
-    "application/x-pdf",
-    "application/acrobat",
-    "applications/vnd.pdf",
-    "text/pdf",
-    "text/x-pdf",
-}
-
-
-def _ensure_supported_pdf(content_type: str | None) -> None:
-    if not content_type or content_type not in SUPPORTED_PDF_TYPES:
-        raise ValueError("Only PDF files are supported.")
-
-
 async def run_service(
     pdf_bytes: bytes,
     ingestion_source: str,
@@ -35,8 +20,6 @@ async def run_service(
     prompt: str,
     db: Session,
 ) -> dict:
-    _ensure_supported_pdf(content_type)
-
     set_log("Processing document bytes")
 
     try:
@@ -95,13 +78,7 @@ async def run_service(
         set_log(
             f"Similar documents found: {similar_doc} with similarity {similar_doc[0]['similarity'] if similar_doc else 'N/A'}"
         )
-        return {
-            "pages": pages,
-            "bibliographic_info": bibliographic_info,
-            "missing_fields": missing_fields,
-            "page_count": len(pages),
-            "paper_id": paper.id,
-        }
+        return result
     else:
         set_log("No similar documents found in the database.")
         result["similar_documents"] = []
