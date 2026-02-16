@@ -1,19 +1,12 @@
 from __future__ import annotations
 
-import json
 from typing import Any
 
 import httpx
-
-from app.core.prompts import (
-    get_bibliographic_info_determine_completion_prompt,
-    get_bibliographic_info_extraction_prompt,
-)
 from app.langgraph.multimodal_extraction.state import DocumentState
 from app.clients.embedding_client import EmbeddingClient
 
 from app.core.logger import set_log
-from app.core.config import settings
 
 
 async def embed_data(state: DocumentState) -> DocumentState:

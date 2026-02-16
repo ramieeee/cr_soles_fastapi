@@ -49,7 +49,7 @@ def get_vlm_ocr_system_prompt() -> str:
 
 bibliographic_info_extraction_system_prompt = """
     Extract bibliographic information from the OCR text.
-    Return ONLY valid JSON with keys: title, authors, journal, year, abstract.
+    Return ONLY valid JSON with keys: title, authors, journal, year, abstract, pdf_url.
     Use empty string for missing text fields, empty array for authors, and null for year.
 """
 
@@ -81,6 +81,7 @@ bibliographic_info_determine_completion_prompt = """
     - "journal" is non-empty.
     - "year" is correct according to the document.
     - "abstract" is not cut or incomplete.
+    - "pdf_url" is present if it can be extracted from the OCR text.
     
     # Output:
     Return ONLY "complete" or "incomplete".

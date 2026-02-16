@@ -87,7 +87,6 @@ async def run_service(
 
     # Similar to DB session management in routers
     if similar_doc:
-
         result["similar_documents"] = [
             {
                 "id": doc.get("id"),
@@ -99,6 +98,7 @@ async def run_service(
         set_log(
             f"Similar documents found: {similar_doc} with similarity {similar_doc[0]['similarity'] if similar_doc else 'N/A'}"
         )
+        return result
     else:
         set_log("No similar documents found in the database.")
         result["similar_documents"] = []
@@ -111,6 +111,7 @@ async def run_service(
     journal = bibliographic_info.get("journal") or None
     year = bibliographic_info.get("year")
     abstract = bibliographic_info.get("abstract") or None
+    pdf_url = bibliographic_info.get("pdf_url") or None
 
     # title = "Unknown title"
     # authors = ["test"]
