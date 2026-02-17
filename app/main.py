@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.routers.multimodal_extraction_route import router as document_router
+from app.routers.multimodal_extraction_route import (
+    router as multimodal_extraction_router,
+)
+from app.routers.paper_review_route import router as paper_review_router
 from app.core.logger import set_log
 
 app = FastAPI(title=settings.app_name)
@@ -20,7 +23,8 @@ app.add_middleware(
     allow_headers=["*"],  # Including Content-Type
 )
 
-app.include_router(document_router, prefix=settings.api_prefix)
+app.include_router(multimodal_extraction_router, prefix=settings.api_prefix)
+app.include_router(paper_review_router, prefix=settings.api_prefix)
 set_log("Routers loaded successfully")
 
 

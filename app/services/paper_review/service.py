@@ -1,129 +1,69 @@
 from __future__ import annotations
 
-import base64
-
-import fitz  # PyMuPDF
-
-from app.langgraph.multimodal_extraction import get_document_graph
-from app.core.logger import set_log
-from app.repositories.papers_staging_repository import (
-    find_similar_papers,
-    create_papers_staging,
-)
 from sqlalchemy.orm import Session
 
+from app.core.logger import set_log
+from app.enums.paper_review.enums import ReviewTableType
+from app.models.papers import Papers
+from app.models.papers_staging import PapersStaging
+from app.repositories.papers_repository import list_papers
+from app.repositories.papers_staging_repository import list_papers_staging
 
-async def run_service(
-    pdf_bytes: bytes,
-    ingestion_source: str,
-    content_type: str | None,
-    prompt: str,
-    db: Session,
-) -> dict:
-    set_log("Processing document bytes")
 
-    try:
-        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-    except Exception as exc:
-        raise ValueError(f"Invalid PDF: {exc}") from exc
-
-    page_images_b64: list[str] = []
-    try:
-        for page in doc:
-            pix = page.get_pixmap(matrix=fitz.Matrix(2, 2), alpha=False)
-            png_bytes = pix.tobytes("png")
-            page_images_b64.append(base64.b64encode(png_bytes).decode("ascii"))
-    finally:
-        doc.close()
-
-    if not page_images_b64:
-        raise ValueError("PDF has no pages.")
-
-    graph = get_document_graph()
-
-    state = {
-        "page_images_b64": page_images_b64,
-        "prompt": prompt,
-        "attempts": 0,
-        "max_attempts": 1,
+def _serialize_papers_staging(item: PapersStaging) -> dict:
+    return {
+        "idx": item.idx,
+        "paper_id": item.id,
+        "is_approved": item.is_approved,
+        "approval_timestamp": item.approval_timestamp,
+        "title": item.title,
+        "authors": item.authors,
+        "journal": item.journal,
+        "year": item.year,
+        "abstract": item.abstract,
+        "pdf_url": item.pdf_url,
+        "ingestion_source": item.ingestion_source,
+        "ingestion_timestamp": item.ingestion_timestamp,
     }
 
-    set_log("Invoking document graph")
 
-    # invoke the graph
-    result = await graph.ainvoke(state)
-    pages = result.get("ocr_pages", [])
+def _serialize_papers(item: Papers) -> dict:
+    return {
+        "id": item.id,
+        "title": item.title,
+        "authors": item.authors,
+        "journal": item.journal,
+        "year": item.year,
+        "abstract": item.abstract,
+        "pdf_url": item.pdf_url,
+        "ingestion_source": item.ingestion_source,
+        "ingestion_timestamp": item.ingestion_timestamp,
+    }
 
-    # embedding and similar document search
-    embedding = result.get("embedding")
-    similar_doc = []
-    if embedding:
-        similar_doc = find_similar_papers(
-            db,
-            embedding=embedding,
-            limit=1,
-            min_similarity=0.90,
-        )
 
-    # Similar to DB session management in routers
-    if similar_doc:
-        result["similar_documents"] = [
-            {
-                "id": doc.get("id"),
-                "title": doc.get("title"),
-                "similarity": doc.get("similarity"),
-            }
-            for doc in similar_doc
-        ]
-        set_log(
-            f"Similar documents found: {similar_doc} with similarity {similar_doc[0]['similarity'] if similar_doc else 'N/A'}"
-        )
-        return result
-    else:
-        set_log("No similar documents found in the database.")
-        result["similar_documents"] = []
-
-    bibliographic_info = result.get("bibliographic_info") or {}
-    missing_fields = result.get("missing_fields", [])
-
-    title = bibliographic_info.get("title") or "Unknown title"
-    authors = bibliographic_info.get("authors") or []
-    journal = bibliographic_info.get("journal") or None
-    year = bibliographic_info.get("year")
-    abstract = bibliographic_info.get("abstract") or None
-    pdf_url = bibliographic_info.get("pdf_url") or None
-
-    # title = "Unknown title"
-    # authors = ["test"]
-    # journal = "nature"
-    # year = 2025
-    # abstract = "This is a test abstract."
-    # pdf_url = None
-    # embedding = None
-
-    paper = create_papers_staging(
-        db,
-        title=title,
-        authors=authors,
-        journal=journal,
-        year=year,
-        abstract=abstract,
-        pdf_url=pdf_url,
-        ingestion_source=ingestion_source,
-        embedding=embedding if embedding else None,
+def fetch_review_papers(
+    db: Session,
+    *,
+    offset: int,
+    limit: int,
+    table_type: ReviewTableType,
+) -> dict:
+    set_log(
+        f"fetch_review_papers: table_type={table_type} offset={offset} limit={limit}"
     )
 
+    if table_type == ReviewTableType.PAPERS_STAGING:
+        items = list_papers_staging(db, offset=offset, limit=limit)
+        payload = [_serialize_papers_staging(item) for item in items]
+    elif table_type == ReviewTableType.PAPERS:
+        items = list_papers(db, offset=offset, limit=limit)
+        payload = [_serialize_papers(item) for item in items]
+    else:
+        raise ValueError(f"Unsupported table_type: {table_type}")
+
     return {
-        "pages": pages,
-        "bibliographic_info": bibliographic_info,
-        "missing_fields": missing_fields,
-        "page_count": len(pages),
-        "paper_id": paper.id,
+        "table_type": table_type,
+        "offset": offset,
+        "limit": limit,
+        "items": payload,
     }
-    # return {
-    #     "pages": [],
-    #     "bibliographic_info": {},
-    #     "missing_fields": {},
-    #     "page_count": 0,
-    #     "paper_id": paper.id,
-    # }
