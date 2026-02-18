@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, union_all, func
 from sqlalchemy.orm import Session
 from sqlalchemy import literal
 from typing import Sequence, Any
@@ -53,12 +53,39 @@ def list_papers_staging(
     offset: int = 0,
     limit: int = 100,
 ) -> list[PapersStaging]:
+    latest_idx_per_paper = (
+        select(
+            PapersStaging.idx.label("idx"),
+            func.row_number()
+            .over(
+                partition_by=PapersStaging.id,
+                order_by=PapersStaging.idx.desc(),
+            )
+            .label("rn"),
+        )
+        .where(
+            PapersStaging.is_approved.is_(False),
+            PapersStaging.id.isnot(None),
+        )
+        .subquery()
+    )
+
+    selected_idxs = union_all(
+        select(latest_idx_per_paper.c.idx).where(latest_idx_per_paper.c.rn == 1),
+        select(PapersStaging.idx).where(
+            PapersStaging.is_approved.is_(False),
+            PapersStaging.id.is_(None),
+        ),
+    ).subquery()
+
     query = (
         select(PapersStaging)
+        .join(selected_idxs, PapersStaging.idx == selected_idxs.c.idx)
+        .order_by(PapersStaging.idx.desc())
         .offset(int(offset))
-        .where(PapersStaging.is_approved.is_(False))
         .limit(int(limit))
     )
+
     result = db.execute(query)
     return result.scalars().all()
 
@@ -91,3 +118,51 @@ def create_papers_staging(
     db.add(paper_staging)
     db.flush()
     return paper_staging
+
+
+def get_papers_staging_by_idx(
+    db: Session,
+    *,
+    idx: int,
+) -> PapersStaging | None:
+    return db.get(PapersStaging, idx)
+
+
+def get_papers_staging_by_paper_id(
+    db: Session,
+    *,
+    paper_id: UUID,
+) -> PapersStaging | None:
+    stmt = (
+        select(PapersStaging)
+        .where(PapersStaging.id == paper_id)
+        .order_by(PapersStaging.idx.desc())
+    )
+    return db.execute(stmt).scalars().first()
+
+
+def update_papers_staging_fields(
+    db: Session,
+    *,
+    item: PapersStaging,
+    fields: dict,
+) -> PapersStaging:
+    for key, value in fields.items():
+        setattr(item, key, value)
+    db.flush()
+    return item
+
+
+def _get_papers_staging(db: Session, identifier: str) -> PapersStaging | None:
+    if identifier.isdigit():
+        return db.get(PapersStaging, int(identifier))
+    try:
+        value = UUID(identifier)
+    except ValueError:
+        return None
+    stmt = (
+        select(PapersStaging)
+        .where(PapersStaging.id == value)
+        .order_by(PapersStaging.idx.desc())
+    )
+    return db.execute(stmt).scalars().first()

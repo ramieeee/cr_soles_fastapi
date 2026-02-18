@@ -86,6 +86,26 @@ def create_paper(
     return paper
 
 
+def get_paper_by_id(
+    db: Session,
+    *,
+    paper_id,
+) -> Papers | None:
+    return db.get(Papers, paper_id)
+
+
+def update_paper_fields(
+    db: Session,
+    *,
+    item: Papers,
+    fields: dict,
+) -> Papers:
+    for key, value in fields.items():
+        setattr(item, key, value)
+    db.flush()
+    return item
+
+
 def create_extraction(
     db: Session,
     *,
