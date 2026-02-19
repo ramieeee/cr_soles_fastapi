@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
 from app.services.paper_review.service import (
     fetch_review_papers,
-    update_paper_staging,
+    update_paper_staging as update_paper_staging_service,
     approve_paper_staging,
     update_paper,
 )
@@ -43,14 +43,14 @@ async def fetch_all_papers_staging(
 
 
 @router.post(f"{router_prefix}/update/paper_staging", tags=["document"])
-async def update_paper_staging(
+async def update_paper_staging_route(
     id: str = Query(...),
-    payload: str = Query(...),
+    payload: dict | str = Body(...),
     db: Session = Depends(get_db),
 ):
     set_log("update_paper_staging")
     try:
-        updated = update_paper_staging(db, identifier=id, payload=payload)
+        updated = update_paper_staging_service(db, identifier=id, payload=payload)
         return {"id": updated.idx}
     except ValueError as exc:
         set_log(f"ValueError in update_paper_staging: {exc}", level="error")

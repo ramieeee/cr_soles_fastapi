@@ -18,6 +18,7 @@ from app.repositories.papers_staging_repository import (
     list_papers_staging,
     get_papers_staging_by_idx,
     get_papers_staging_by_paper_id,
+    create_papers_staging,
     update_papers_staging_fields,
 )
 from app.repositories.papers_repository import (
@@ -145,8 +146,6 @@ def _get_papers_staging(db: Session, identifier: str) -> PapersStaging | None:
 
 
 def approve_paper_staging(db: Session, idx: int) -> PapersStaging:
-    # NOTE: get_db() already commits/rolls back per request.
-    # begin_nested() makes this operation atomic even if an outer transaction exists.
     with db.begin_nested():
         item = get_papers_staging_by_idx(db, idx=idx)
         if item is None:
@@ -188,21 +187,86 @@ def approve_paper_staging(db: Session, idx: int) -> PapersStaging:
         )
 
 
+def edit_paper_staging(db: Session, idx: int, fields: dict) -> PapersStaging:
+    item = get_papers_staging_by_idx(db, idx=idx)
+    if item is None:
+        raise ValueError("Staging paper not found.")
+    if item.is_approved:
+        raise ValueError("Cannot edit an approved staging paper.")
+    return update_papers_staging_fields(db, item=item, fields=fields)
+
+
 def update_paper_staging(
     db: Session,
     *,
     identifier: str,
     payload: str | dict,
 ) -> PapersStaging:
-    item = _get_papers_staging(db, identifier)
-    if item is None:
+    original = _get_papers_staging(db, identifier)
+    if original is None:
         raise ValueError("Staging paper not found.")
+    if original.is_approved:
+        raise ValueError("Cannot edit an approved staging paper.")
 
     cleaned = _normalize_edit_payload(_parse_payload(payload))
     if not cleaned:
         raise ValueError("No editable fields provided.")
 
-    return update_papers_staging_fields(db, item=item, fields=cleaned)
+    with db.begin_nested():
+        # 1) 원본 + 수정 payload를 합친 "수정본"으로 papers 생성/업데이트
+        edited_fields = {
+            "title": cleaned.get("title", original.title),
+            "authors": cleaned.get("authors", original.authors),
+            "journal": cleaned.get("journal", original.journal),
+            "year": cleaned.get("year", original.year),
+            "abstract": cleaned.get("abstract", original.abstract),
+            "pdf_url": cleaned.get("pdf_url", original.pdf_url),
+            "ingestion_source": cleaned.get(
+                "ingestion_source", original.ingestion_source
+            ),
+            "embedding": original.embedding,
+        }
+
+        if original.id is None:
+            paper = create_paper(db, **edited_fields)
+        else:
+            paper = get_paper_by_id(db, paper_id=original.id)
+            if paper is None:
+                raise ValueError("Referenced paper not found.")
+            paper = update_paper_fields(db, item=paper, fields=edited_fields)
+
+        # 2) papers_id를 가진 papers_staging row 생성 (로깅 목적)
+        log_row = create_papers_staging(
+            db,
+            paper_id=paper.id,
+            title=edited_fields["title"],
+            authors=edited_fields["authors"],
+            journal=edited_fields["journal"],
+            year=edited_fields["year"],
+            abstract=edited_fields["abstract"],
+            pdf_url=edited_fields["pdf_url"],
+            ingestion_source=edited_fields["ingestion_source"],
+            embedding=edited_fields["embedding"],
+        )
+        update_papers_staging_fields(
+            db,
+            item=log_row,
+            fields={
+                "is_approved": True,
+                "approval_timestamp": func.now(),
+            },
+        )
+
+        # 3) 기존 원본 idx row도 승인 처리해서 fetch 대상에서 제외
+        return update_papers_staging_fields(
+            db,
+            item=original,
+            fields={
+                "id": paper.id,
+                "is_approved": True,
+                "approval_timestamp": func.now(),
+            },
+        )
 
 
 def update_paper(
