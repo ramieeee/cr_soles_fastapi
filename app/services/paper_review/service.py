@@ -20,6 +20,9 @@ from app.repositories.papers_staging_repository import (
     get_papers_staging_by_paper_id,
     update_papers_staging_fields,
 )
+from app.repositories.papers_repository import (
+    create_paper,
+)
 
 ALLOWED_EDIT_KEYS = (
     "title",
@@ -142,20 +145,47 @@ def _get_papers_staging(db: Session, identifier: str) -> PapersStaging | None:
 
 
 def approve_paper_staging(db: Session, idx: int) -> PapersStaging:
-    item = get_papers_staging_by_idx(db, idx=idx)
-    if item is None:
-        raise ValueError("Staging paper not found.")
-    if item.is_approved:
-        raise ValueError("Staging paper is already approved.")
+    # NOTE: get_db() already commits/rolls back per request.
+    # begin_nested() makes this operation atomic even if an outer transaction exists.
+    with db.begin_nested():
+        item = get_papers_staging_by_idx(db, idx=idx)
+        if item is None:
+            raise ValueError("Staging paper not found.")
+        if item.is_approved:
+            raise ValueError("Staging paper is already approved.")
 
-    return update_papers_staging_fields(
-        db,
-        item=item,
-        fields={
+        paper_fields = {
+            "title": item.title,
+            "authors": item.authors,
+            "journal": item.journal,
+            "year": item.year,
+            "abstract": item.abstract,
+            "pdf_url": item.pdf_url,
+            "ingestion_source": item.ingestion_source,
+        }
+
+        if item.id is None:
+            paper = create_paper(db, **paper_fields)
+            paper_id = paper.id
+        else:
+            paper = get_paper_by_id(db, paper_id=item.id)
+            if paper is None:
+                raise ValueError("Referenced paper not found.")
+            paper = update_paper_fields(db, item=paper, fields=paper_fields)
+            paper_id = paper.id
+
+        staging_fields = {
             "is_approved": True,
             "approval_timestamp": func.now(),
-        },
-    )
+        }
+        if item.id is None:
+            staging_fields["id"] = paper_id
+
+        return update_papers_staging_fields(
+            db,
+            item=item,
+            fields=staging_fields,
+        )
 
 
 def update_paper_staging(
