@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from uuid import UUID
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.logger import set_log
@@ -102,7 +103,9 @@ def _normalize_edit_payload(payload: dict) -> dict:
             elif isinstance(value, str):
                 cleaned[key] = [item.strip() for item in value.split(",") if item]
             elif isinstance(value, list):
-                cleaned[key] = [str(item).strip() for item in value if str(item).strip()]
+                cleaned[key] = [
+                    str(item).strip() for item in value if str(item).strip()
+                ]
         elif key == "year":
             if value is None or value == "":
                 cleaned[key] = None
@@ -138,7 +141,24 @@ def _get_papers_staging(db: Session, identifier: str) -> PapersStaging | None:
     return get_papers_staging_by_paper_id(db, paper_id=value)
 
 
-def update_staging_paper(
+def approve_paper_staging(db: Session, idx: int) -> PapersStaging:
+    item = get_papers_staging_by_idx(db, idx=idx)
+    if item is None:
+        raise ValueError("Staging paper not found.")
+    if item.is_approved:
+        raise ValueError("Staging paper is already approved.")
+
+    return update_papers_staging_fields(
+        db,
+        item=item,
+        fields={
+            "is_approved": True,
+            "approval_timestamp": func.now(),
+        },
+    )
+
+
+def update_paper_staging(
     db: Session,
     *,
     identifier: str,
