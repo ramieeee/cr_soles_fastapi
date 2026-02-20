@@ -65,7 +65,7 @@ async def update_paper_staging_route(
 @router.post(f"{router_prefix}/update/paper", tags=["document"])
 async def update_paper_route(
     id: str = Query(...),
-    payload: str = Query(...),
+    payload: dict | str = Body(...),
     db: Session = Depends(get_db),
 ):
     set_log("update_paper")

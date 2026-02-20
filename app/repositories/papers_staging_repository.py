@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import select, union_all, func
@@ -102,8 +103,12 @@ def create_papers_staging(
     pdf_url: str | None = None,
     ingestion_source: str | None = None,
     embedding: list[float] | None = None,
+    ingestion_timestamp: datetime | None = None,
+    is_approved: bool | None = None,
+    approval_timestamp: Any | None = None,
 ) -> PapersStaging:
     paper_staging = PapersStaging(
+        id=paper_id,
         title=title,
         authors=authors or [],
         journal=journal,
@@ -113,8 +118,14 @@ def create_papers_staging(
         ingestion_source=ingestion_source,
         embedding=embedding,
     )
-    if paper_id is not None:
-        paper_staging.id = paper_id
+
+    if ingestion_timestamp is not None:
+        paper_staging.ingestion_timestamp = ingestion_timestamp
+    if is_approved is not None:
+        paper_staging.is_approved = is_approved
+    if approval_timestamp is not None:
+        paper_staging.approval_timestamp = approval_timestamp
+
     db.add(paper_staging)
     db.flush()
     return paper_staging

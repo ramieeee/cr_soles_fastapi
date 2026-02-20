@@ -288,4 +288,23 @@ def update_paper(
     if not cleaned:
         raise ValueError("No editable fields provided.")
 
-    return update_paper_fields(db, item=item, fields=cleaned)
+    with db.begin_nested():
+        updated = update_paper_fields(db, item=item, fields=cleaned)
+
+        create_papers_staging(
+            db,
+            paper_id=updated.id,
+            title=updated.title,
+            authors=updated.authors,
+            journal=updated.journal,
+            year=updated.year,
+            abstract=updated.abstract,
+            pdf_url=updated.pdf_url,
+            ingestion_source=updated.ingestion_source,
+            embedding=updated.embedding,
+            ingestion_timestamp=updated.ingestion_timestamp,
+            is_approved=True,
+            approval_timestamp=func.now(),
+        )
+
+        return updated
