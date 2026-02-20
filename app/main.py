@@ -13,6 +13,9 @@ set_log("App started")
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://cr-soles.cloud",
+    "https://www.cr-soles.cloud",
+    "https://cr-soles-eepg6ul8d-ramheeyees-projects.vercel.app",
 ]
 
 app.add_middleware(
