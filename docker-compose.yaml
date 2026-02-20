@@ -1,0 +1,9 @@
+services:
+  fastapi:
+    image: cr_soles_fastapi:latest
+    container_name: fastapi-app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    restart: always
