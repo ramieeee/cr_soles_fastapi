@@ -1,6 +1,6 @@
 services:
   fastapi:
-    image: cr_soles_fastapi:latest
+    image: ghcr.io/ramieeee/cr_soles_fastapi:latest
     container_name: fastapi-app
     ports:
       - "8000:8000"
