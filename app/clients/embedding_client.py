@@ -65,3 +65,30 @@ class EmbeddingClient:
         set_log(f"Response from EmbeddingClient.embed: {response.text[:30]}")
         response.raise_for_status()
         return response.json()
+
+    def embed_sync(
+        self,
+        client: httpx.Client,
+        *,
+        input: str,
+        max_tokens: Optional[int] = None,
+        extra: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
+        """Synchronous embed entrypoint for sync call sites."""
+        set_log("EmbeddingClient.embed_sync called")
+        set_log(f"Input text for embedding: {input[:30]}")
+
+        payload: dict[str, Any] = {
+            "model": self.model,
+            "input": input,
+        }
+
+        response = client.post(
+            self.chat_url,
+            json=payload,
+            headers=self._headers(),
+            timeout=self.timeout,
+        )
+        set_log(f"Response from EmbeddingClient.embed_sync: {response.text[:30]}")
+        response.raise_for_status()
+        return response.json()

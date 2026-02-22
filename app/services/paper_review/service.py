@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.common_utils.embedding import embed_bibliographic_info_sync
 from app.core.logger import set_log
 from app.enums.paper_review.enums import ReviewTableType
 from app.models.papers import Papers
@@ -161,6 +162,7 @@ def approve_paper_staging(db: Session, idx: int) -> PapersStaging:
             "abstract": item.abstract,
             "pdf_url": item.pdf_url,
             "ingestion_source": item.ingestion_source,
+            "embedding": item.embedding,
         }
 
         if item.id is None:
@@ -187,15 +189,6 @@ def approve_paper_staging(db: Session, idx: int) -> PapersStaging:
         )
 
 
-def edit_paper_staging(db: Session, idx: int, fields: dict) -> PapersStaging:
-    item = get_papers_staging_by_idx(db, idx=idx)
-    if item is None:
-        raise ValueError("Staging paper not found.")
-    if item.is_approved:
-        raise ValueError("Cannot edit an approved staging paper.")
-    return update_papers_staging_fields(db, item=item, fields=fields)
-
-
 def update_paper_staging(
     db: Session,
     *,
@@ -212,20 +205,39 @@ def update_paper_staging(
     if not cleaned:
         raise ValueError("No editable fields provided.")
 
+    merged_title = cleaned.get("title", original.title)
+    merged_abstract = cleaned.get("abstract", original.abstract)
+    should_reembed = (
+        ("title" in cleaned and merged_title != original.title)
+        or ("abstract" in cleaned and merged_abstract != original.abstract)
+    )
+
     with db.begin_nested():
         # 1) 원본 + 수정 payload를 합친 "수정본"으로 papers 생성/업데이트
         edited_fields = {
-            "title": cleaned.get("title", original.title),
+            "title": merged_title,
             "authors": cleaned.get("authors", original.authors),
             "journal": cleaned.get("journal", original.journal),
             "year": cleaned.get("year", original.year),
-            "abstract": cleaned.get("abstract", original.abstract),
+            "abstract": merged_abstract,
             "pdf_url": cleaned.get("pdf_url", original.pdf_url),
             "ingestion_source": cleaned.get(
                 "ingestion_source", original.ingestion_source
             ),
-            "embedding": original.embedding,
         }
+
+        if should_reembed:
+            new_bi_embedding = embed_bibliographic_info_sync(
+                {
+                    "title": merged_title,
+                    "abstract": merged_abstract,
+                }
+            )
+            edited_fields["embedding"] = (
+                new_bi_embedding.get("embedding") if new_bi_embedding else None
+            )
+        else:
+            edited_fields["embedding"] = original.embedding
 
         if original.id is None:
             paper = create_paper(db, **edited_fields)
@@ -233,6 +245,10 @@ def update_paper_staging(
             paper = get_paper_by_id(db, paper_id=original.id)
             if paper is None:
                 raise ValueError("Referenced paper not found.")
+
+            if not should_reembed and edited_fields.get("embedding") is None:
+                edited_fields["embedding"] = paper.embedding
+
             paper = update_paper_fields(db, item=paper, fields=edited_fields)
 
         # 2) papers_id를 가진 papers_staging row 생성 (로깅 목적)
@@ -288,8 +304,29 @@ def update_paper(
     if not cleaned:
         raise ValueError("No editable fields provided.")
 
+    merged_title = cleaned.get("title", item.title)
+    merged_abstract = cleaned.get("abstract", item.abstract)
+    should_reembed = (
+        ("title" in cleaned and merged_title != item.title)
+        or ("abstract" in cleaned and merged_abstract != item.abstract)
+    )
+
     with db.begin_nested():
-        updated = update_paper_fields(db, item=item, fields=cleaned)
+        updated_fields = {**cleaned}
+        embedding_to_log = item.embedding
+        if should_reembed:
+            new_bi_embedding = embed_bibliographic_info_sync(
+                {
+                    "title": merged_title,
+                    "abstract": merged_abstract,
+                }
+            )
+            embedding_to_log = (
+                new_bi_embedding.get("embedding") if new_bi_embedding else None
+            )
+            updated_fields["embedding"] = embedding_to_log
+
+        updated = update_paper_fields(db, item=item, fields=updated_fields)
 
         create_papers_staging(
             db,
@@ -301,7 +338,7 @@ def update_paper(
             abstract=updated.abstract,
             pdf_url=updated.pdf_url,
             ingestion_source=updated.ingestion_source,
-            embedding=updated.embedding,
+            embedding=embedding_to_log,
             ingestion_timestamp=updated.ingestion_timestamp,
             is_approved=True,
             approval_timestamp=func.now(),
