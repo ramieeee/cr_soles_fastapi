@@ -1,21 +1,38 @@
 from functools import lru_cache
 
-from langgraph.graph import END, StateGraph
-
-from app.langgraph.cr_extraction.nodes.bibliographic_info_node import (
-    extract_bibliographic_info,
-    prepare_retry,
-    should_retry,
-)
-from app.langgraph.cr_extraction.nodes.ocr_node import run_ocr
+from langgraph.graph import END, StateGraph, START
 from app.langgraph.cr_extraction.state import CrExtractionState
+from app.langgraph.cr_extraction.nodes.extraction_node import extraction_node
+from app.langgraph.cr_extraction.nodes.validation_node import validation_node
+from app.langgraph.cr_extraction.nodes.reduce_node import reduce_node
+from app.langgraph.cr_extraction.nodes.next_page_node import next_page_node
+
+
+def _route_next(state: CrExtractionState) -> str:
+    pages = state.get("pages_text") or []
+    page_index = int(state.get("current_page_index") or 0)
+    return "next_page" if page_index < (len(pages) - 1) else "reduce"
 
 
 def build_cr_extraction_graph():
     graph = StateGraph(CrExtractionState)
-    graph.add_node("ocr", run_ocr)
+    graph.add_node("extraction_node", extraction_node)
+    graph.add_node("validation_node", validation_node)
+    graph.add_node("next_page", next_page_node)
+    graph.add_node("reduce", reduce_node)
 
-    graph.add_edge("embed", END)
+    graph.add_edge(START, "extraction_node")
+    graph.add_edge("extraction_node", "validation_node")
+    graph.add_conditional_edges(
+        "validation_node",
+        _route_next,
+        {
+            "next_page": "next_page",
+            "reduce": "reduce",
+        },
+    )
+    graph.add_edge("next_page", "extraction_node")
+    graph.add_edge("reduce", END)
     return graph.compile()
 
 
