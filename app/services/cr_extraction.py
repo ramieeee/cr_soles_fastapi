@@ -35,13 +35,15 @@ def _normalize_pages_text(contents: Any) -> list[str]:
     return pages
 
 
-def _build_initial_state(payload: CRExtractionRequest, pages_text: list[str]) -> dict:
+def _build_initial_state(
+    payload: CRExtractionRequest, pages_content: list[str]
+) -> dict:
     return {
         "paper_id": payload.paper_id,
-        "pages_text": pages_text,
+        "pages_content": pages_content,
         "current_page_index": 0,
         "debug_events": [],
-        "stream_test_prompt": payload.stream_test_prompt,
+        "stream_prompt": payload.stream_prompt,
     }
 
 
@@ -49,32 +51,32 @@ def _format_sse(event: str, data: dict[str, Any]) -> str:
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
-async def run_service(
-    payload: CRExtractionRequest,
-    db: Session,
-) -> dict:
-    paper_id = payload.paper_id
-    set_log("Processing extraction service")
+# async def run_service(
+#     payload: CRExtractionRequest,
+#     db: Session,
+# ) -> dict:
+#     paper_id = payload.paper_id
+#     set_log("Processing extraction service")
 
-    paper = get_paper_by_id(db, paper_id=paper_id)
-    if paper is None:
-        raise ValueError(f"Paper not found: {paper_id}")
+#     paper = get_paper_by_id(db, paper_id=paper_id)
+#     if paper is None:
+#         raise ValueError(f"Paper not found: {paper_id}")
 
-    pages_text = _normalize_pages_text(paper.pages_content)
+#     pages_text = _normalize_pages_text(paper.pages_content)
 
-    graph = get_cr_extraction_graph()
-    state = _build_initial_state(payload, pages_text)
+#     graph = get_cr_extraction_graph()
+#     state = _build_initial_state(payload, pages_text)
 
-    set_log("Invoking document graph")
-    result = await graph.ainvoke(state)
+#     set_log("Invoking document graph")
+#     result = await graph.ainvoke(state)
 
-    return {
-        "paper_id": paper_id,
-        "page_count": len(pages_text),
-        "last_node": result.get("last_node"),
-        "debug_events": result.get("debug_events", []),
-        "streamed_text": result.get("streamed_text", ""),
-    }
+#     return {
+#         "paper_id": paper_id,
+#         "page_count": len(pages_text),
+#         "last_node": result.get("last_node"),
+#         "debug_events": result.get("debug_events", []),
+#         "streamed_text": result.get("streamed_text", ""),
+#     }
 
 
 async def run_stream_service(
@@ -86,9 +88,9 @@ async def run_stream_service(
     if paper is None:
         raise ValueError(f"Paper not found: {paper_id}")
 
-    pages_text = _normalize_pages_text(paper.pages_content)
+    pages_content = _normalize_pages_text(paper.pages_content)
     graph = get_cr_extraction_graph()
-    state = _build_initial_state(payload, pages_text)
+    state = _build_initial_state(payload, pages_content)
 
     async def event_generator() -> AsyncIterator[str]:
         yield _format_sse(
@@ -96,7 +98,7 @@ async def run_stream_service(
             {
                 "message": "cr extraction stream started",
                 "paper_id": paper_id,
-                "page_count": len(pages_text),
+                "page_count": len(pages_content),
             },
         )
 
@@ -128,6 +130,7 @@ async def run_stream_service(
                 {
                     "message": "cr extraction stream completed",
                     "paper_id": paper_id,
+                    "page_count": len(pages_content),
                 },
             )
         except Exception as exc:

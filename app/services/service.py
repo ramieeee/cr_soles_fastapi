@@ -69,7 +69,7 @@ async def run_service(
 
     # invoke the graph
     result = await graph.ainvoke(state)
-    pages = result.get("ocr_pages", [])
+    pages_content = result.get("ocr_pages", [])
 
     bibliographic_info = result.get("bibliographic_info") or {}
     missing_fields = result.get("missing_fields", [])
@@ -102,10 +102,10 @@ async def run_service(
 
         matched_paper_id = similar_doc[0].get("id")
         return {
-            "pages": pages,
+            "pages_content": pages_content,
             "bibliographic_info": bibliographic_info,
             "missing_fields": missing_fields,
-            "page_count": len(pages),
+            "page_count": len(pages_content),
             "paper_id": matched_paper_id,
             "similar_documents": similar_documents,
         }
@@ -135,22 +135,22 @@ async def run_service(
         journal=journal,
         year=year,
         abstract=abstract,
-        pages_content=pages,
+        pages_content=pages_content,
         pdf_url=pdf_url,
         ingestion_source=ingestion_source,
         embedding=embedding if embedding else None,
     )
 
     return {
-        "pages": pages,
+        "pages_content": pages_content,
         "bibliographic_info": bibliographic_info,
         "missing_fields": missing_fields,
-        "page_count": len(pages),
+        "page_count": len(pages_content),
         "paper_id": paper.id,
         "similar_documents": [],
     }
     # return {
-    #     "pages": [],
+    #     "pages_content": [],
     #     "bibliographic_info": {},
     #     "missing_fields": {},
     #     "page_count": 0,

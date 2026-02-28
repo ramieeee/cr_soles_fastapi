@@ -11,26 +11,26 @@ async def cr_extraction_node(state: CrExtractionState) -> CrExtractionState:
     extraction(page i) -> validation(page i) -> next_page -> extraction(page i+1) ...
     """
 
-    pages = state.get("pages_text") or []
+    pages_content = state.get("pages_content") or []
     page_index = int(state.get("current_page_index") or 0)
 
     set_log(
-        f"cr_extraction.cr_extraction_node: page_index={page_index} pages={len(pages)}"
+        f"cr_extraction.cr_extraction_node: page_index={page_index} pages={len(pages_content)}"
     )
 
-    if not pages:
+    if not pages_content:
         return {
-            "missing_fields": ["pages_text"],
+            "missing_fields": ["pages_content"],
             "extraction_complete": False,
         }
 
-    if page_index < 0 or page_index >= len(pages):
+    if page_index < 0 or page_index >= len(pages_content):
         return {
             "missing_fields": ["current_page_index"],
             "extraction_complete": False,
         }
 
-    page_text = pages[page_index]
+    page_text = pages_content[page_index]
     _ = page_text
 
     steps = list(state.get("inference_steps") or [])

@@ -27,7 +27,7 @@ class CrExtractionState(TypedDict, total=False):
 
     # ---------- Input ----------
     paper_id: str
-    pages_text: List[str]  # OCR cleaned text per page
+    pages_content: List[Dict[str, Any]]  # OCR cleaned text per page
     current_page_index: int
 
     # ---------- Core extracted objects ----------
@@ -66,4 +66,4 @@ class CrExtractionState(TypedDict, total=False):
     debug_events: List[Dict[str, Any]]
     last_node: str
     streamed_text: str
-    stream_test_prompt: str
+    stream_prompt: str

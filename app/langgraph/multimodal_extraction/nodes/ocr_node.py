@@ -29,7 +29,7 @@ async def run_ocr(state: DocumentState) -> DocumentState:
     vllm_client = VllmClient(
         port="", timeout_s=300.0
     )  # port is empty when run on runpod
-    semaphore = asyncio.Semaphore(10)
+    semaphore = asyncio.Semaphore(4)
 
     def _extract_json_obj(text: str) -> dict[str, Any] | None:
         cleaned = text.strip()

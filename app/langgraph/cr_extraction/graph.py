@@ -13,7 +13,7 @@ from app.langgraph.cr_extraction.nodes.stream_invoke_test import (
 
 
 def _route_next(state: CrExtractionState) -> str:
-    pages = state.get("pages_text") or []
+    pages = state.get("pages_content") or []
     page_index = int(state.get("current_page_index") or 0)
     return "next_page" if page_index < (len(pages) - 1) else "reduce"
 

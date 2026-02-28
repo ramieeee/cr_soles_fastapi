@@ -53,12 +53,13 @@ async def stream_invoke_test2(state: CrExtractionState) -> CrExtractionState:
         }
     )
 
-    pages = state.get("pages_text") or []
-    page_text = pages[page_index] if 0 <= page_index < len(pages) else ""
+    pages_content = state.get("pages_content") or []
+    page_text = (
+        pages_content[page_index] if 0 <= page_index < len(pages_content) else ""
+    )
     user_prompt = (
-        state.get("stream_test_prompt")
-        or f"Summarize this page in one sentence.\n\n{page_text[:4000]}"
-        or "Return a short sentence for stream testing."
+        state.get("stream_prompt")
+        or f"Summarize the information given below, or give useful information\n\n{page_text[:4000]}"
     )
 
     collected_tokens: list[str] = []
@@ -69,7 +70,6 @@ async def stream_invoke_test2(state: CrExtractionState) -> CrExtractionState:
             system_prompt="You are a concise extraction assistant.",
             user_prompt=user_prompt,
             task_type=VllmTaskType.CR_EXTRACTION,
-            max_tokens=128,
         ):
             delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content")
             if not delta:
