@@ -4,7 +4,7 @@ from app.langgraph.multimodal_extraction.state import DocumentState
 from app.clients.embedding_client import EmbeddingClient
 
 from app.core.logger import set_log
-from app.common_utils.embedding import embed_bibliographic_info
+from app.utils.embedding import embed_bibliographic_info
 
 
 async def embed_data(state: DocumentState) -> DocumentState:

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Body
 
-from app.services.cr_extraction.service import run_service
+from app.services.cr_extraction import run_service
 from app.core.logger import set_log
 from app.core.db import get_db
 from sqlalchemy.orm import Session

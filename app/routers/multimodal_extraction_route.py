@@ -1,6 +1,6 @@
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, Depends
 
-from app.services.multimodal_extraction.service import run_service
+from app.services.multimodal_extraction import run_service
 from app.core.logger import set_log
 from app.core.db import get_db
 from sqlalchemy.orm import Session

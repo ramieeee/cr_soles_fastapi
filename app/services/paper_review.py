@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.common_utils.embedding import embed_bibliographic_info_sync
+from app.utils.embedding import embed_bibliographic_info_sync
 from app.core.logger import set_log
 from app.enums.paper_review import ReviewTableType
 from app.models.papers import Papers

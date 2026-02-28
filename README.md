@@ -3,94 +3,83 @@
 ## Project Structure
 
 ```text
-cr_soles_fastapi/
-├── .github/
-│   └── workflows/
-│       └── deploy.yml
-├── alembic/
-│   ├── versions/
-│   │   ├── a661a205fc45_first_alembic_commit.py
-│   │   └── c1cf20366dd8_add_papers_staging.py
-│   ├── env.py
-│   └── script.py.mako
-├── app/
-│   ├── clients/
-│   │   ├── embedding_client.py
-│   │   ├── ollama_client.py
-│   │   └── vllm_client.py
-│   ├── common_utils/
-│   │   └── embedding.py
-│   ├── core/
-│   │   ├── config.py
-│   │   ├── db.py
-│   │   ├── logger.py
-│   │   ├── prompts.py
-│   │   └── security.py
-│   ├── enums/
-│   │   ├── cr_extraction/
-│   │   ├── multimodal_extraction/
-│   │   │   └── enums.py
-│   │   └── paper_review/
-│   │       └── enums.py
-│   ├── langgraph/
-│   │   ├── cr_extraction/
-│   │   │   ├── nodes/
-│   │   │   │   ├── cr_extraction_node.py
-│   │   │   │   ├── next_page_node.py
-│   │   │   │   ├── reduce_node.py
-│   │   │   │   └── validation_node.py
-│   │   │   ├── __init__.py
-│   │   │   ├── graph.py
-│   │   │   └── state.py
-│   │   └── multimodal_extraction/
-│   │       ├── nodes/
-│   │       │   ├── bibliographic_info_node.py
-│   │       │   ├── embedding_node.py
-│   │       │   └── ocr_node.py
-│   │       ├── __init__.py
-│   │       ├── graph.py
-│   │       └── state.py
-│   ├── models/
-│   │   ├── __init__.py
-│   │   ├── agents_logs.py
-│   │   ├── evaluations.py
-│   │   ├── extractions.py
-│   │   ├── papers.py
-│   │   └── papers_staging.py
-│   ├── repositories/
-│   │   ├── papers_repository.py
-│   │   └── papers_staging_repository.py
-│   ├── routers/
-│   │   ├── __init__.py
-│   │   ├── cr_extraction_route.py
-│   │   ├── multimodal_extraction_route.py
-│   │   └── paper_review_route.py
-│   ├── services/
-│   │   ├── multimodal_extraction/
-│   │   │   └── service.py
-│   │   └── paper_review/
-│   │       └── service.py
-│   ├── __init__.py
-│   └── main.py
-├── logs/
-│   └── app.log
-├── supabase/
-│   ├── .temp/
-│   │   └── cli-latest
-│   ├── .gitignore
-│   └── config.toml
-├── .dockerignore
-├── .env
-├── .gitignore
-├── .python-version
+cr_soles_fastapi
+├── alembic
+│   ├── env.py
+│   ├── script.py.mako
+│   └── versions/
 ├── alembic.ini
+├── app/
+│   ├── clients/
+│   │   ├── embedding_client.py
+│   │   ├── ollama_client.py
+│   │   └── vllm_client.py
+│   ├── core/
+│   │   ├── config.py
+│   │   ├── db.py
+│   │   ├── logger.py
+│   │   └── security.py
+│   ├── enums/
+│   │   ├── common.py
+│   │   ├── multimodal_extraction.py
+│   │   └── paper_review.py
+│   ├── langgraph/
+│   │   ├── cr_extraction/
+│   │   │   ├── graph.py
+│   │   │   ├── nodes/
+│   │   │   │   ├── cr_extraction_node.py
+│   │   │   │   ├── next_page_node.py
+│   │   │   │   ├── reduce_node.py
+│   │   │   │   └── validation_node.py
+│   │   │   └── state.py
+│   │   └── multimodal_extraction/
+│   │       ├── graph.py
+│   │       ├── nodes/
+│   │       │   ├── bibliographic_info_node.py
+│   │       │   ├── embedding_node.py
+│   │       │   └── ocr_node.py
+│   │       └── state.py
+│   ├── main.py
+│   ├── models/
+│   │   ├── agents_logs.py
+│   │   ├── evaluations.py
+│   │   ├── extractions.py
+│   │   ├── papers_staging.py
+│   │   └── papers.py
+│   ├── prompts/
+│   │   ├── common.py
+│   │   ├── cr_extraction.py
+│   │   └── multimodal_extraction.py
+│   ├── repositories/
+│   │   ├── agents_logs_repository.py
+│   │   ├── evaluations_repository.py
+│   │   ├── extractions_repository.py
+│   │   ├── papers_repository.py
+│   │   └── papers_staging_repository.py
+│   ├── routers/
+│   │   ├── cr_extraction_route.py
+│   │   ├── multimodal_extraction_route.py
+│   │   └── paper_review_route.py
+│   ├── schemas/
+│   │   ├── common.py
+│   │   └── cr_extraction.py
+│   ├── services/
+│   │   ├── cr_extraction.py
+│   │   ├── multimodal_extraction.py
+│   │   └── paper_review.py
+│   └── utils/
+│       └── embedding.py
 ├── cloud_model_script.md
 ├── db_creation.sql
 ├── docker-compose.yaml
 ├── Dockerfile
+├── logs/
+│   └── app.log
 ├── pyproject.toml
 ├── README.md
 ├── requirements.txt
+├── supabase/
+│   └── config.toml
 └── uv.lock
 ```
 
@@ -98,13 +87,14 @@ cr_soles_fastapi/
 
 - `app/`: FastAPI Application
 - `app/clients/`: External Service Clients (e.g., VLLM, Ollama)
-- `app/common_utils/`: Shared Utility Functions
+- `app/utils/`: Shared Utility Functions
 - `app/core/`: Core Application Logic (Config, DB, Logging, Prompts, Security)
 - `app/enums/`: Enums for Different Modules
 - `app/routers/`: API Endpoints
 - `app/services/`: Business Logic
 - `app/repositories/`: DB Access Layer
 - `app/models/`: SQLAlchemy Models
+- `app/schemas/`: Pydantic Schemas for DTO Validation
 - `app/core/`: Configuration, DB, Logging, Security
 - `app/langgraph/`: LangGraph Based Logic (Graphs, Nodes and States)
 - `app/prompts/`: Prompt Templates for LLMs for each service

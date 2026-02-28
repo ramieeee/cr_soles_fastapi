@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
-from app.services.paper_review.service import (
+from app.services.paper_review import (
     fetch_review_papers,
     update_paper_staging as update_paper_staging_service,
     approve_paper_staging,
