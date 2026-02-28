@@ -1,4 +1,3 @@
-# TODO - Place all prompts here in the related graph directory
 vlm_ocr_system_prompt = """
     # Task:
     Extract the visible content from the document image.

@@ -18,7 +18,7 @@ async def run_service(
 
     # Fetch paper details from DB
     paper = get_paper_by_id(db, paper_id=paper_id)
-    print(paper.pages_content)
+    contents = paper.pages_content or []
 
     try:
         print("frame")
@@ -29,6 +29,7 @@ async def run_service(
 
     state = {
         "payload": paper_id,
+        "pages_content": contents,
     }
 
     set_log("Invoking document graph")

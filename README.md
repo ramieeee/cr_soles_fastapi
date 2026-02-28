@@ -105,8 +105,9 @@ cr_soles_fastapi/
 - `app/services/`: Business Logic
 - `app/repositories/`: DB Access Layer
 - `app/models/`: SQLAlchemy Models
-- `app/core/`: Configuration, DB, Logging, Prompts, Security
+- `app/core/`: Configuration, DB, Logging, Security
 - `app/langgraph/`: LangGraph Based Logic (Graphs, Nodes and States)
+- `app/prompts/`: Prompt Templates for LLMs for each service
 - `alembic/`, `alembic.ini`: DB Migration(Alembic)
 - `docker-compose.yaml`, `Dockerfile`: Docker Container Ochestration
 - `supabase/`: Supabase Related Files

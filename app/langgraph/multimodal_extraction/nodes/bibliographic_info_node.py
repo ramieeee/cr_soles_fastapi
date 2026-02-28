@@ -5,7 +5,7 @@ from typing import Any
 
 import httpx
 
-from app.core.prompts import (
+from app.prompts.multimodal_extraction import (
     get_bibliographic_info_determine_completion_prompt,
     get_bibliographic_info_extraction_prompt,
 )

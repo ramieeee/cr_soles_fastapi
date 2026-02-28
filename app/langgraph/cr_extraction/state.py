@@ -15,6 +15,14 @@ class Evidence(TypedDict, total=False):
     confidence: float
 
 
+class Objects(TypedDict, total=False):
+    population: Dict[str, Any]
+    cr_operationalization: Dict[str, Any]
+    biomarkers: Dict[str, Any]
+    study_design: Dict[str, Any]
+    outcomes: Dict[str, Any]
+
+
 class CrExtractionState(TypedDict, total=False):
 
     # ---------- Input ----------

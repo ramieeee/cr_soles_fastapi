@@ -5,7 +5,9 @@ import json
 import httpx
 from typing import Any
 
-from app.core.prompts import get_vlm_ocr_system_prompt
+from app.prompts.multimodal_extraction import (
+    get_vlm_ocr_system_prompt,
+)
 from app.langgraph.multimodal_extraction.state import DocumentState
 from app.clients.vllm_client import VllmClient
 from app.core.logger import set_log
