@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import Any, Optional
+import json
+from typing import Any, AsyncIterator, Optional
 import httpx
 from app.core.config import settings
 from app.core.logger import set_log
@@ -16,13 +17,13 @@ class VllmClient:
         timeout_s: float = 300.0,
     ):
         self.base_url = (base_url or settings.vllm_base_url).rstrip("/")
-        self.port = port
+        self.port = settings.vllm_port if port is None else port
         self.model = model_name or settings.vllm_model
         self.api_key = api_key or getattr(settings, "vllm_api_key", "EMPTY")
 
         self.chat_url = (
             f"{self.base_url}:{self.port}/v1/chat/completions"
-            if self.port != ""
+            if self.port not in ("", None)
             else f"{self.base_url}/v1/chat/completions"
         )
         self.timeout = httpx.Timeout(timeout_s)
@@ -41,13 +42,13 @@ class VllmClient:
         self,
         user_prompt: str,
         image_b64: Optional[str],
-        image_mime: str = "image/png",
+        image_mime: Optional[str] = "image/png",
     ) -> dict[str, Any]:
         """
         Build OpenAI-compatible user message.
         Image handling is purely structural.
         """
-        if not image_b64:
+        if not image_b64 or not image_mime:
             return {
                 "role": "user",
                 "content": user_prompt,
@@ -64,6 +65,78 @@ class VllmClient:
             ],
         }
 
+    async def stream_chat(
+        self,
+        client: httpx.AsyncClient,
+        *,
+        system_prompt: str,
+        user_prompt: str,
+        image_b64: Optional[str] = None,
+        task_type: VllmTaskType = VllmTaskType.STREAM_CHAT,
+        mime_type: Optional[str] = "image/png",
+        temperature: float = 0.2,
+        max_tokens: Optional[int] = None,
+        extra: Optional[dict[str, Any]] = None,
+    ) -> AsyncIterator[dict[str, Any]]:
+        """
+        Streaming chat entrypoint
+        """
+        set_log(f"VllmClient called with task_type={task_type}")
+        messages = [
+            {"role": "system", "content": system_prompt},
+            self._build_user_message(
+                user_prompt=user_prompt,
+                image_b64=image_b64,
+                image_mime=mime_type,
+            ),
+        ]
+
+        payload: dict[str, Any] = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": temperature,
+            "stream": True,
+        }
+
+        if max_tokens is not None:
+            payload["max_tokens"] = max_tokens
+        if extra:
+            payload.update(extra)
+
+        async with client.stream(
+            "POST",
+            self.chat_url,
+            json=payload,
+            headers=self._headers(),
+            timeout=self.timeout,
+        ) as response:
+            if response.status_code != 200:
+                error_text = await response.aread()
+                decoded_error = error_text.decode("utf-8", errors="replace")
+                set_log(
+                    f"VllmClient error response: {response.status_code} - {decoded_error} Task_type={task_type}",
+                    level="error",
+                )
+                response.raise_for_status()
+
+            async for line in response.aiter_lines():
+                if not line:
+                    continue
+                if not line.startswith("data:"):
+                    continue
+
+                data = line.removeprefix("data:").strip()
+                if data == "[DONE]":
+                    break
+
+                try:
+                    yield json.loads(data)
+                except json.JSONDecodeError:
+                    set_log(
+                        f"Skipping non-JSON vLLM stream chunk: {data[:100]}",
+                        level="error",
+                    )
+
     async def chat(
         self,
         client: httpx.AsyncClient,
@@ -72,7 +145,7 @@ class VllmClient:
         user_prompt: str,
         image_b64: Optional[str] = None,
         task_type: VllmTaskType = VllmTaskType.CHAT,
-        image_mime: str = "image/png",
+        image_mime: Optional[str] = "image/png",
         temperature: float = 0.2,
         max_tokens: Optional[int] = None,
         extra: Optional[dict[str, Any]] = None,

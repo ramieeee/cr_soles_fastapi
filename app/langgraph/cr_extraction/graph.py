@@ -6,6 +6,10 @@ from app.langgraph.cr_extraction.nodes.cr_extraction_node import cr_extraction_n
 from app.langgraph.cr_extraction.nodes.validation_node import validation_node
 from app.langgraph.cr_extraction.nodes.reduce_node import reduce_node
 from app.langgraph.cr_extraction.nodes.next_page_node import next_page_node
+from app.langgraph.cr_extraction.nodes.stream_invoke_test import (
+    stream_invoke_test1 as test_node1,
+    stream_invoke_test2 as test_node2,
+)
 
 
 def _route_next(state: CrExtractionState) -> str:
@@ -16,23 +20,29 @@ def _route_next(state: CrExtractionState) -> str:
 
 def build_cr_extraction_graph():
     graph = StateGraph(CrExtractionState)
-    graph.add_node("cr_extraction_node", cr_extraction_node)
-    graph.add_node("validation_node", validation_node)
-    graph.add_node("next_page", next_page_node)
-    graph.add_node("reduce", reduce_node)
+    graph.add_node("stream_invoke_test1", test_node1)
+    graph.add_node("stream_invoke_test2", test_node2)
 
-    graph.add_edge(START, "cr_extraction_node")
-    graph.add_edge("cr_extraction_node", "validation_node")
-    graph.add_conditional_edges(
-        "validation_node",
-        _route_next,
-        {
-            "next_page": "next_page",
-            "reduce": "reduce",
-        },
-    )
-    graph.add_edge("next_page", "cr_extraction_node")
-    graph.add_edge("reduce", END)
+    graph.add_edge(START, "stream_invoke_test1")
+    graph.add_edge("stream_invoke_test1", "stream_invoke_test2")
+    graph.add_edge("stream_invoke_test2", END)
+    # graph.add_node("cr_extraction_node", cr_extraction_node)
+    # graph.add_node("validation_node", validation_node)
+    # graph.add_node("next_page", next_page_node)
+    # graph.add_node("reduce", reduce_node)
+
+    # graph.add_edge(START, "cr_extraction_node")
+    # graph.add_edge("cr_extraction_node", "validation_node")
+    # graph.add_conditional_edges(
+    #     "validation_node",
+    #     _route_next,
+    #     {
+    #         "next_page": "next_page",
+    #         "reduce": "reduce",
+    #     },
+    # )
+    # graph.add_edge("next_page", "cr_extraction_node")
+    # graph.add_edge("reduce", END)
     return graph.compile()
 
 

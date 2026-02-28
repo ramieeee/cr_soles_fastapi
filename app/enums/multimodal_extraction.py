@@ -6,3 +6,5 @@ class VllmTaskType(str, Enum):
     BIBLIOGRAPHIC_INFO_EXTRACTION = "bibliographic_info_extraction"
     EMBEDDING = "embedding"
     CHAT = "chat"
+    STREAM_CHAT = "stream_chat"
+    CR_EXTRACTION = "cr_extraction"

@@ -61,3 +61,9 @@ class CrExtractionState(TypedDict, total=False):
 
     # ---------- Versioning ----------
     extraction_version: str
+
+    # ---------- Streaming test ----------
+    debug_events: List[Dict[str, Any]]
+    last_node: str
+    streamed_text: str
+    stream_test_prompt: str
