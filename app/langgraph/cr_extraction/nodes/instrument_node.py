@@ -13,14 +13,14 @@ from app.prompts.cr_extraction import (
 from app.utils.stream_invoke import stream_node_llm_and_collect
 
 
-async def instrument_router_node(state: CrExtractionState) -> CrExtractionState:
-    set_log("cr_extraction.instrument_router_node")
+async def instrument_node(state: CrExtractionState) -> CrExtractionState:
+    set_log("cr_extraction.instrument_node")
 
     pages_content = state.get("pages_content") or []
     population = state.get("population") or {}
     stream_prompt = state.get("stream_prompt")
     result = await stream_node_llm_and_collect(
-        node="instrument_router_node",
+        node="instrument_node",
         system_prompt=get_instrument_system_prompt(),
         user_prompt=get_instrument_user_prompt(
             pages_content,
@@ -38,7 +38,7 @@ async def instrument_router_node(state: CrExtractionState) -> CrExtractionState:
     try:
         cr_operationalization = parse_json_object(raw_text)
     except Exception as exc:
-        set_log(f"instrument_router_node parse failed: {exc}", level="error")
+        set_log(f"instrument_node parse failed: {exc}", level="error")
         cr_operationalization = {
             "instrument_name": None,
             "instrument_family": "not_detected",
@@ -51,7 +51,7 @@ async def instrument_router_node(state: CrExtractionState) -> CrExtractionState:
         }
 
     events = list(state.get("debug_events") or [])
-    events.append({"node": "instrument_router_node", "ts": time.time()})
+    events.append({"node": "instrument_node", "ts": time.time()})
 
     detected_name = cr_operationalization.get("instrument_name")
     return {
@@ -59,5 +59,5 @@ async def instrument_router_node(state: CrExtractionState) -> CrExtractionState:
         "detected_instruments": [detected_name] if detected_name else [],
         "validation_target": "instrument",
         "debug_events": events,
-        "last_node": "instrument_router_node",
+        "last_node": "instrument_node",
     }
