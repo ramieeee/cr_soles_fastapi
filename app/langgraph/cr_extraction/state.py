@@ -67,3 +67,4 @@ class CrExtractionState(TypedDict, total=False):
     last_node: str
     streamed_text: str
     stream_prompt: str
+    normalized_row: Dict[str, Any]

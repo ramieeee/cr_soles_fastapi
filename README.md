@@ -27,7 +27,6 @@ cr_soles_fastapi
 │   │   ├── cr_extraction/
 │   │   │   ├── graph.py
 │   │   │   ├── nodes/
-│   │   │   │   ├── cr_extraction_node.py
 │   │   │   │   ├── next_page_node.py
 │   │   │   │   ├── reduce_node.py
 │   │   │   │   └── validation_node.py
