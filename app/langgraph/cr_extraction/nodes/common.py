@@ -64,13 +64,13 @@ def pick_relevant_pages(
     candidate: dict[str, Any],
     fallback_count: int = 3,
 ) -> list[dict[str, Any]]:
-    keywords: list[str] = []
+
+    keywords = []
 
     for key in (
         "target_population",
         "country_setting",
         "instrument_name",
-        "instrument_family",
         "scoring_method",
         "time_administration",
     ):
@@ -78,10 +78,24 @@ def pick_relevant_pages(
         if isinstance(value, str) and value and value != "not_detected":
             keywords.append(value.lower())
 
-    for key in ("clinical_condition_tags", "detected_proxy_labels"):
+    for key in (
+        "clinical_condition_tags",
+        "detected_proxy_labels",
+    ):
         value = candidate.get(key) or []
         if isinstance(value, list):
             keywords.extend(str(item).lower() for item in value if item)
+
+    instrument_family = candidate.get("instrument_family")
+    if isinstance(instrument_family, str):
+        if instrument_family and instrument_family != "not_detected":
+            keywords.append(instrument_family.lower())
+    elif isinstance(instrument_family, list):
+        keywords.extend(
+            str(item).lower()
+            for item in instrument_family
+            if item and item != "not_detected"
+        )
 
     scored_pages: list[tuple[int, dict[str, Any]]] = []
     for item in pages_content:

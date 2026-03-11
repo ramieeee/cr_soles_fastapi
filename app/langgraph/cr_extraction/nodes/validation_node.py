@@ -34,7 +34,6 @@ async def validation_node(state: CrExtractionState) -> CrExtractionState:
             task_type=VllmTaskType.CR_EXTRACTION,
             port="",
             timeout_s=300.0,
-            max_tokens=512,
             start_message="re-validating population evidence",
             done_message="population re-validation completed",
         )
@@ -76,7 +75,6 @@ async def validation_node(state: CrExtractionState) -> CrExtractionState:
             task_type=VllmTaskType.CR_EXTRACTION,
             port="",
             timeout_s=300.0,
-            max_tokens=512,
             start_message="re-validating instrument evidence",
             done_message="instrument re-validation completed",
         )

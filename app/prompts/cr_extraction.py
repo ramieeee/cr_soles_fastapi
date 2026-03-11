@@ -82,7 +82,7 @@ Output schema:
 
 Rules:
 - Pick instruments that have been applied to the study (not from the related work).
-- If no named instrument exists but CR proxies are listed, use instrument_family="multi_proxy_custom".
+- If no named instrument exists but CR proxies are listed, use instrument_family=["multi_proxy_custom"].
 - Use normalized proxy labels such as education, occupation, leisure, social, multilingualism, music, physical_activity, iq_proxy.
 - confidence must be between 0 and 1.
 - evidence quotes must be copied exactly from the provided page text.
