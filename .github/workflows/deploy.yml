@@ -33,6 +33,7 @@ jobs:
           docker push "${IMAGE}:sha-${{ github.sha }}"
 
   deploy:
+    if: false # disables job running
     runs-on: ubuntu-latest
     needs: build
     steps:
